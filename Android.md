@@ -1,9 +1,17 @@
+#### Activity
+
+Activity：最基础Activity
+
+FragmentActivity：间接继承自Activity,支持support Fragment嵌套
+
+AppCompatActivity:继承自FragmentActivity，一般程序的Activity继承该类重写onCreate()即可
+
 ### （一）Activity 布局
 
 #### 组件常用属性
 
-> * 属性值match_parent:组件填充以扩展父容器
-> * 属性值wrap_content:组件内容扩展到整个组件
+> * match_parent:组件填充以扩展父容器
+> * wrap_content:组件内容扩展到整个组件
 > * id:组件唯一标识
 > * background:背景
 > * gravity:组件对齐方式，比较多，有top,left,fill等，可多选
@@ -90,6 +98,16 @@
 > * layout_columnSpan:设置组件横跨几列
 
 **使用网格布局最好将其设置为根布局，否则可能不显示组件(迷惑)**
+
+#### 6.标签TabLayout
+
+常与ViewPager联动作为页面滑动指示器
+
+TabLayout下添加TabItem作为标签子选项
+
+```java
+setupWithViewPager（ViewPager）//TabLayout通过该方法与ViewPager绑定
+```
 
 ### （二）常用组件
 
@@ -201,16 +219,6 @@ Adapter是控制器的一部分
 ![img](https://www.runoob.com/wp-content/uploads/2015/09/77919389.jpg)
 
 适配器初始化时（构造）要绑定上下文环境，View组件，数据，组件通过setAdapter()设置适配器
-
-#### 9.列表ListView
-
-ListView需要与适配器配合使用，列表项是适配器绑定的数据
-
-列表项Item点击会触发ItemClick事件，由方法onItemClick()监听
-
-列表项Item长按会触发ItemLongClick事件，由方法onItemLongClick监听
-
-显示效果就是单纯的列表
 
 #### 10.下拉列表选择框Spinner
 
@@ -372,13 +380,15 @@ setOnClickListener(new OnClickListener() {
         });  
 ```
 
-通常可以在xml中设置对应的监听器属性完成事件处理
+通常可以在xml中设置对应的监听器属性完成事件处理，如设置属性onClick绑定某个函数，或设置某个监听器重写监听器内方法
+
+Fragment通常用于在Activity中实现界面切换
 
 #### 2.事件回调
 
 ##### 方法回调
 
-一种将功能定义与功能实现相分开的解耦合思想，对外提供实现接口(方法)，客户可以根据自己的需要对具体问题实现自己的需要，即接口统一，实现不同
+一种将功能定义与功能实现相分开的解耦合思想，对外提供实现接口(方法)，客户可以根据自己的需要对具体问题实现自己的需要，即接口统一，实现不同。使用回调即重写方法过程，某些运行过程检测到某种变化后自动回调执行重写方法
 
 ##### 使用场景
 
@@ -433,3 +443,946 @@ public class MyButton extends Button{
 *④长按组件某个按钮时: boolean* **onKeyLongPress***(int keyCode,KeyEvent event);
 *⑤键盘快捷键事件发生: boolean* **onKeyShortcut***(int keyCode,KeyEvent event); 
 
+### （四）Fragment
+
+可以把Fragment看成一个子Activity，即Activity片段！使用Fragment 可以把屏幕划分成几块，然后进行分组，进行一个模块化的管理！从而可以更加方便的在 运行过程中动态地更新Activity的用户界面！Fragment并不能单独使用，他需要嵌套在Activity 中使用，Fragment 在应用中用作可重复使用的容器，可以在各种 Activity 和布局配置中呈现相同的界面布局。
+
+![img](https://www.runoob.com/wp-content/uploads/2015/08/31722863.jpg)
+
+#### 创建Fragment
+
+如同创建Activity一样，使用Fragment必须继承Fragment或其它已有的Fragment子类，重写onCreateView()方法绘制Fragment
+
+```java
+public static class ExampleFragment extends Fragment {
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // 将Fragment加载至Activity
+        return inflater.inflate(R.layout.example_fragment, container, false);
+    }
+}
+```
+
+其中LayoutInflater对象用于布局加载，container为父级Activity
+
+使用inflater的inflate方法将Fragment加载至Activity，第一个参数为组件布局文件，第二个为父级容器，第三个指示是否在扩展期间扩展布局至父级容器，一般为false
+
+#### 在Activity中添加Fragment
+
+每个Fragment都需要位于某个Activity中
+
+1. 在Activity的xml布局文件中声明属性fragment并指定对应的Fragment类即可，每个片段都需要id以供Activity重启时恢复片段
+
+2. 在代码中动态添加,获取FragmentManager后获取FragmentTransaction添加调用Fragment
+
+   ```java
+   FragmentManager fragmentManager = getSupportFragmentManager();
+   FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+   ```
+
+   ```java
+   ExampleFragment fragment = new ExampleFragment();
+   fragmentTransaction.add(R.id.fragment_container, fragment);
+   fragmentTransaction.commit();
+   ```
+
+   add()方法第一个参数为布局ViewGroup，第二个为要添加的片段，需要使用commit()提交生效
+
+   即初始时Activity启动onCreate()加载xml，属性fragment中配置Fragment，加载Fragment启动onCreateView()，Fragment也有对应的xml，加载xml
+   
+   动态添加使用replace与add，第一个参数为Activity的某个Fragment的容器布局的id，第二个为某个Fragment对象，切换时使用hide/show方法
+
+#### Fragment容器
+
+通常在Activity中增加一个帧布局作为Fragment的容器
+
+```
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/ly_top_bar"
+        android:layout_above="@id/div_tab_bar"
+        android:id="@+id/ly_content">
+    </FrameLayout>
+```
+
+#### Fragment与Activity交互
+
+既然Fragment可以看做子Activity被嵌入到任意Activity当中，那么交互就是一项必然的点
+
+1. Fragment获得Activity中的组件: **getActivity().findViewById(R.id.list)；**
+2. Activity获得Fragment中的组件(根据id和tag都可以)：**getFragmentManager.findFragmentByid(R.id.fragment1);**
+
+3. Activit传递数据给Fragment：在Activity中创建Bundle数据包,调用Fragment实例的setArguments(bundle) 从而将Bundle数据包传给Fragment,然后Fragment中调用getArguments获得 Bundle对象,然后进行解析就可以了
+
+4. **Fragment传递数据给Activity**
+
+   使用回调机制，Fragment内部定义接口，Fragment实现一部分，调用接口方法，Activity传递接口，重写接口方法
+
+   **Step 1:定义一个回调接口:(Fragment中)**
+
+   ```java
+   /*接口*/  
+   public interface CallBack{  
+       /*定义一个获取信息的方法*/  
+       public void getResult(String result);  
+   }  
+   ```
+
+   **Step 2：接口回调（Fragment中）**
+
+   ```java
+   /*接口回调*/  
+   public void getData(CallBack callBack){  
+       /*获取文本框的信息,当然也可以传其他类型的参数*/  
+       String msg = editText.getText().toString();  
+       callBack.getResult(msg);//调用接口方法  
+   }  
+   ```
+
+   **Step 3:使用接口回调方法读数据(Activity中)**
+
+   ```java
+   /*耦合处 使用接口回调的方法获取数据 */  
+   leftFragment.getData(new CallBack() {  
+    @Override  
+          public void getResult(String result) {              /*打印信息*/  
+               Toast.makeText(MainActivity.this, "-->>" + result, 1).show();  
+               }
+       	}); 
+   ```
+
+Activity调用Fragment的接口回调，传递事件处理方法，参数即为Fragment要传达的信息，即不直接从Fragment中拿/处理数据，而是通过接口拿/处理
+
+#### 实例：底部导航栏
+
+对于Fragment来说，有多中模板可以快速构建常见的功能样式
+
+
+
+### （五）Android线程间通信
+
+ Android不允许在UI线程外操作UI ,更新UI只能在UI线程即主线程中执行，否则并发更新UI会导致线程安全问题，因此只能顺序更新UI（使用异步机制提高效率），为了使非UI线程可以更新UI，Android提供几种方法
+
+```java
+Activity.runOnUiThread(Runnnable)
+View.post(Runnable)
+View.postDelayed(Runnable,long)
+```
+
+UI会执行传入的线程，调用线程提供的方法更新UI
+
+还有两种方式实现线程间通信，Handler与AsyncTask类
+
+#### Handler
+
+##### handler结构：hadler+looper+message->messageQueue->looper取信息并回调执行方法
+
+![img](https://www.runoob.com/wp-content/uploads/2015/07/25345060.jpg) 
+
+- **UI线程**:就是我们的主线程,系统在创建UI线程的时候会初始化一个Looper对象,同时也会创建一个与其关联的MessageQueue;
+- **Handler**:作用就是发送与处理信息,如果希望Handler正常工作,在当前线程中要有一个Looper对象
+- **Message**:Handler接收与处理的消息对象
+- **MessageQueue**:消息队列,先进先出管理Message,在初始化Looper对象时会创建一个与之关联的MessageQueue;
+- **Looper**:每个线程只能够有一个Looper,管理MessageQueue,不断地从中取出Message分发给对应的Handler处理
+
+**当我们的子线程想修改Activity中的UI组件时,我们可以新建一个Handler对象,通过这个对象向主线程发送信息;而我们发送的信息会先到主线程的MessageQueue进行等待,由Looper按先入先出顺序取出,再根据message对象的what属性分发给对应的Handler进行处理**
+
+MessageQueue位于UI线程，每个要更新UI的线程绑定Looper与Handler，发送Message到消息队列，UI线程使用Looper不断从消息队列中取消息并根据消息指定绑定的线程的Handler自动执行回调方法handlerMessage方法更新UI
+
+更通用的，使用过该机制完成通用线程间的通信
+
+1. **线程B直接调用Looper.prepare()方法即可为当前线程创建Looper对象,而它的构造器会创建配套的MessageQueue，调用Looper.loop()方法启动Looper，Looper维护消息队列，不断循环并处理消息。**
+
+2. **线程A使用Looper创建Handler，重写Handler的handleMessage处理消息，Handler发送Message到消息队列，Looper取出消息，根据what调用对应的Handler的handlerMessage异步执行**
+
+Handler中的常用方法
+
+- **handleMessage**(Message msg):处理消息的方法,通常是用于被重写!
+- **sendEmptyMessage**(int what):发送空消息
+- **sendEmptyMessageDelayed**(int what,long delayMillis):指定延时多少毫秒后发送空信息
+- **sendMessage**(Message msg):立即发送信息
+- **sendMessageDelayed**(Message msg):指定延时多少毫秒后发送信息
+- final boolean **hasMessage**(int what):检查消息队列中是否包含what属性为指定值的消息 如果是参数为(int what,Object object):除了判断what属性,还需要判断Object属性是否为指定对象的消息
+
+##### Handler使用
+
+ **1 )直接调用Looper.prepare()方法即可为当前线程创建Looper对象,而它的构造器会创建配套的MessageQueue;**
+
+**2 )创建Handler对象,重写handleMessage( )方法就可以处理来自于其他线程的信息了!**
+
+**3 )调用Looper.loop()方法启动Looper**
+
+#### AsyncTask
+
+轻量级异步线程，不构造Handler进行异步操作
+
+![img](https://www.runoob.com/wp-content/uploads/2015/07/27686655.jpg) 
+
+AsyncTask是一个抽象类，定义了三种泛型，通常要写它的子类完成想要的任务，对象调用execute()开始该异步线程
+
+ ![img](https://www.runoob.com/wp-content/uploads/2015/07/39584771.jpg) 
+
+##### 使用
+
+ ```java
+public class MyAsyncTask extends AsyncTask<Integer,Integer,String>  
+{  
+    private TextView txt;  
+    private ProgressBar pgbar;  
+  
+    //初始化传递相关组件
+    public MyAsyncTask(TextView txt,ProgressBar pgbar)  
+    {  
+        super();  
+        this.txt = txt;  
+        this.pgbar = pgbar;  
+    }  
+    //1.初始化UI：该方法运行在UI线程中,UI初始化更新 
+    @Override  
+    protected void onPreExecute() {  
+        txt.setText("开始执行异步线程~");  
+    }  
+    
+    //2.异步执行：该方法不运行在UI线程中,主要用于异步操作,通过调用publishProgress()方法
+    //触发onProgressUpdate对UI进行操作  
+    @Override  
+    protected String doInBackground(Integer... params) {   
+        for (int i = 10;i <= 100;i+=10)  
+        {  
+            publishProgress(i);  
+        }  
+        return "100xxx";  
+    }  
+  
+    //3.异步更新返回显示：在doInBackground方法中,每次调用publishProgress方法都会触发该方法  
+    //运行在UI线程中,UI调用该方法
+    @Override  
+    protected void onProgressUpdate(Integer... values) {  
+        pgbar.setProgress(value);  
+    }  
+    
+    //4.异步方法执行后调用：UI在doInBackground执行完毕后执行该方法
+    @Override
+    protected void onPostExecute(String result){
+        System.out.println("异步方法执行完毕");
+    }
+}
+
+public class MyActivity extends ActionBarActivity {  
+    private TextView txttitle;  
+    private ProgressBar pgbar;  
+    private Button btnupdate;  
+ 
+    @Override  
+    protected void onCreate(Bundle savedInstanceState) {  
+        super.onCreate(savedInstanceState);  
+        setContentView(R.layout.activity_main);  
+        txttitle = (TextView)findViewById(R.id.txttitle);  
+        pgbar = (ProgressBar)findViewById(R.id.pgbar);  
+        btnupdate = (Button)findViewById(R.id.btnupdate);  
+        btnupdate.setOnClickListener(new View.OnClickListener() {  
+            @Override  
+            public void onClick(View v) {
+                //4.使用异步机制
+                MyAsyncTask myTask = new MyAsyncTask(txttitle,pgbar);  
+                myTask.execute(1000);  
+            }  
+        });  
+    }  
+} 
+ ```
+
+### 高级使用
+
+#### RadioGroup+RadioButton实现底部导航
+
+布局之后的事件监听：
+
+```java
+ radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup radioGroup, int i) {
+               //参数i为响应事件的RadioButtopn的id
+            }
+        });
+```
+
+设置RadioButton文字在下，图片在上
+
+```xml
+        <RadioButton
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"//防止文字竖直拉长
+            android:button="@null"//消除默认圆圈
+            android:drawableTop="@mipmap/me"
+            android:gravity="center"//设置图片居中
+            android:text="@string/title_me"
+            android:textColor="@color/colorPrimary"/>
+```
+
+#### 导航库Navigation：专为单Activity多Fragment设计
+
+1. **Navigation graph（导航图）:**
+   这是一个包含所有位置导航相关信息的XML资源文件。这里包括应用程序当中的所有单独的内容区域（被称为目标视图），以及连接在应用程序当中各个“目标”的路径。
+2. **NavHost:**
+   一个用于展示导航图当中目标视图的空的容器。Navigation组件包含一个实现NavHostFragment的默认的NavHost，它是用来展示fragment的目的地。
+3. **NavController:**
+   管理NavHost中的应用程序导航的对象。 当用户在整个应用程序中移动时，NavController会协调NavHost中目标内容的交换。
+
+1. 在layout/navigation下，新建资源文件 选择**Resource type**为**Navigation** ，名随意
+
+在设计中基本组件就是fragment，主要配置fragment与fragment之间的action即可
+
+添加fragment时直接添加fragment即可，同时要写配套的fragmen类与xml布局
+
+```xml
+    <fragment
+        android:id="@+id/navigation_me"
+        android:name="com.example.allbooks.ui.me.MeFragment"
+        android:label="@string/title_me"
+        tools:layout="@layout/fragment_me" />
+```
+
+设计时指定action
+
+ ![img](https://upload-images.jianshu.io/upload_images/900279-26ae44360923e7b7.png?imageMogr2/auto-orient/strip|imageView2/2/w/1200/format/webp) 
+
+2. 在Activity布局中指定Navigation的宿主（Host）:
+
+```xml
+?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <fragment
+        android:id="@+id/my_nav_host_fragment"
+        android:name="androidx.navigation.fragment.NavHostFragment"
+        app:navGraph="@navigation/nav_graph"
+        app:defaultNavHost="true"
+        />
+
+</android.support.constraint.ConstraintLayout>
+```
+
+指定宿主为类NavHostFragment，这个不能变，而app:navGraph="@navigation/nav_graph"就是刚刚创建的导航xml布局的文件名
+
+3. 编辑导航中得fragment
+
+ 在起始Fragment上点击右键，选择**Set Start Destination**，将它设置为起始位置，当宿主（Host）Activity启动的时候，它会做为默认的页面替换布局中的`NavHostFragment`。 
+
+3. 在主Activity下使用
+
+覆写`onSupportNavigateUp()`方法：
+
+```css
+@Override
+public boolean onSupportNavigateUp() {
+    return Navigation.findNavController(this, R.id.nav_host_fragment).navigateUp();
+}
+```
+
+使用[`NavController`](https://link.jianshu.com/?t=https%3A%2F%2Fdeveloper.android.com%2Freference%2Fandroidx%2Fnavigation%2FNavController.html)
+来发起页面跳转，可以通过以下方法获取`NavController`:
+
+- [`NavHostFragment.findNavController(Fragment)`](https://link.jianshu.com/?t=https%3A%2F%2Fdeveloper.android.com%2Freference%2Fandroidx%2Fnavigation%2Ffragment%2FNavHostFragment.html%23findNavController(android.support.v4.app.Fragment))
+- [`Navigation.findNavController(Activity, @IdRes int viewId)`](https://link.jianshu.com/?t=https%3A%2F%2Fdeveloper.android.com%2Freference%2Fandroidx%2Fnavigation%2FNavigation.html%23findNavController(android.app.Activity%2C%20int))
+- [`Navigation.findNavController(View)`](https://link.jianshu.com/?t=https%3A%2F%2Fdeveloper.android.com%2Freference%2Fandroidx%2Fnavigation%2FNavigation.html%23findNavController(android.view.View))
+
+获取到`NavController`后，就可以通过它的`navigate()`方法发起页面跳转，`navigate()`接受action id 或 fragment id 以及导航选项及Bundle参数等作为参数。
+
+```
+NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);//导航栏控制器
+```
+
+
+
+#### badge底部导航栏的消息提醒
+
+#### 页面滑动切换ViewPager+FragmentPagerAdapter/FragmentStatePagerAdapter+Tablayout
+
+ViewPager通过适配器PagerAdapter绑定多个View，可在View间左右滑动切换
+
+要使用普通的ViewPager,必须要为Activity中findViewById找到的viewPager组件设置一个Adapter。可以定义一个类继承自PagerAdapter，这个类需要实现四个方法，分别为：
+
+* instantiateItem(ViewGroup container, int position):添加到容器，初始化指定position为初始显示View
+
+* destroyItem(ViewGroup container, int position,Object object):从容器移除指定position位置的View
+
+* getCount()：返回视图个数
+
+* isViewFromObject(View view,Object object)：是否匹配
+
+```java
+package com.example.allbooks.ui.home;
+
+import android.view.View;
+import android.view.ViewGroup;
+
+import androidx.viewpager.widget.PagerAdapter;
+import androidx.viewpager.widget.ViewPager;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class HomeViewPagerAdapter extends PagerAdapter {
+    private List<View> viewList;//视图列表
+    public HomeViewPagerAdapter(){
+        viewList=new ArrayList<>();
+    }
+    //添加初始化一个View并返回,position为列表View中的某个
+    @Override
+    public Object instantiateItem(ViewGroup container, int position){
+       if(position<0||position>=viewList.size()){
+           System.out.println("home/HomeViewPagerAdapter/add:超出ViewPager列表适配器的范围");
+       }
+       container.addView(viewList.get(position));
+        return viewList.get(position);
+    }
+    //使从ViewGroup中移出当前View
+    @Override
+    public void destroyItem(ViewGroup container, int position, Object object) {
+        if(position<0||position>=viewList.size()){
+            System.out.println("home/HomeViewPagerAdapter/remove:超出ViewPager列表适配器的范围");
+        }
+        container.removeView(viewList.remove(position));
+    }
+
+    @Override
+    //获取当前View数
+    public int getCount() {
+        if(viewList==null)viewList=new ArrayList<>();
+        return viewList.size();
+    }
+
+    @Override
+    //判断是否由对象生成界面
+    public boolean isViewFromObject(View view, Object object) {
+        return view==object;
+    }
+    
+}
+
+```
+
+ Fragment与ViewPager的组合使用，Google提供了FragmentPagerAdapter与FragmentStatePagerAdapter两个类，其中第一个适用于fragment较少的，另一个适用较多的 。推荐使用FragmentPagerAdapter
+
+对于Fragment内的页面滑动，要使用ViewPager与FragmentPagerAdapter
+
+FragmentPagerAdapter也是抽象类，需要重写方法
+
+* getItem(int)
+
+* getCount()
+
+同时绑定维护的是List<Fragment\>和Fragment对应的名称List<String\>而不再是List<View\>
+
+```java
+/**
+ * 使用多Fragment+ViewPager实现滑动操作
+ * 需要适配器FragmentPagerAdapter保存并提供Fragment信息以初始化或恢复
+ */
+public class HomeViewPagerAdapter extends FragmentPagerAdapter {
+    private List<Fragment> frags;
+    private List<String> titles;
+
+    public HomeViewPagerAdapter(FragmentManager fm, List<Fragment> frags, List<String> titles) {
+        //调用父类构造器，第二个参数即只显示当前Fragment,其余Fragment暂停而不是隐藏，隐藏选项已过时
+        super(fm,FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
+        //构造方法初始化
+        this.frags=frags;
+        this.titles=titles;
+    }
+
+    @Override
+    public Fragment getItem(int arg0) {
+        //返回具体位置的Fragment
+        return frags.get(arg0);
+    }
+
+    @Override
+    public int getCount() {
+        //Fragment列表大小
+        return frags.size();
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        // 返回某个Fragment的标题
+        return titles.get(position);
+    }
+
+}
+```
+
+更具体的步骤为
+
+**1.在某个Fragment中使用ViewPager(布局文件中添加)**
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.viewpager.widget.ViewPager
+        android:id="@+id/homeViewPager"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.viewpager.widget.PagerTabStrip
+            android:id="@+id/pagerTabStrip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top" />
+    </androidx.viewpager.widget.ViewPager>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+**2.配置ViewPager对应的FragmentPagerAdapter**
+
+代码如上
+
+**3.配置FragmentPagerAdapter要使用的Fragment与其对应的xml文件**
+
+**4.在主Fragment中初始化Fragment列表，传入适配器，让主Fragment设置适配器，主Fragment的ViewPager通过适配器管理Fragment列表**
+
+```java
+    /**
+     * 创建顶部的滑动切换组件ViewPager
+     */
+    private ViewPager viewPager;//ViewPager，页面切换组件
+    private List<Fragment> fragmentList;//要切换的Fragment队列
+    private List<String> fragmentTitleList;//Fragment名称队列
+    private PagerTabStrip pagerTabStrip;//滑动带
+
+
+    private void scrollHorizonCreate(){
+        viewPager = root.findViewById(R.id.homeViewPager);//获取ViewPager
+        pagerTabStrip=root.findViewById(R.id.pagerTabStrip);
+
+        fragmentTitleList=new ArrayList<>();
+        fragmentTitleList.add("关注");
+        fragmentTitleList.add("榜单");
+        fragmentList=new ArrayList<>();
+        fragmentList.add(new FocusFragment());
+        fragmentList.add(new RankFragment());
+
+        //绑定适配器
+        viewPager.setAdapter(new HomeViewPagerAdapter(getChildFragmentManager(),fragmentList,fragmentTitleList));
+        //设置viewPager的初始界面为第一个界面
+        viewPager.setCurrentItem(0);
+        //添加切换界面的监听器
+        //viewPager.addOnPageChangeListener(new MyOnPageChangeListener());
+    }
+
+```
+
+注意因为是Fragment嵌套Fragment，所以使用的是getChildFragmentManager()
+
+ ![è¿éåå¾çæè¿°](https://img-blog.csdn.net/20170411111926684?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvTEFCTEVORVQ=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast) 
+
+如果是Activtiy嵌套Fragment，则使用 getFragmentManager() 
+
+ ![è¿éåå¾çæè¿°](https://img-blog.csdn.net/20170411105105796?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvTEFCTEVORVQ=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast) 
+
+#### 顶部标题ToolBar
+
+**参考: https://www.jianshu.com/p/e2ae6aaff696 **
+
+ToolBar继承的是ViewGroup,也就是说Toolbar 是一个ViewGroup 容器,内部可以添加View
+
+常位于顶部， 一个Toolbar 从左到右包括了 一个navigation button、一个logo、一个title和subtitle、一个或多个自定义的View和一个 action menu 这5部分 
+
+ ![img](https://upload-images.jianshu.io/upload_images/3513995-d69b1fc00cd05569.png?imageMogr2/auto-orient/strip|imageView2/2/w/818/format/webp) 
+
+自定义View只能在Text中手动添加或通过代码添加
+
+action menu在res下的menu目录中写对应的menu文件，加载即可
+
+#### 搜索SerachView
+
+**参考: https://www.jianshu.com/p/00cb87a2964f **
+
+常与ToolBar搭配使用
+
+
+
+
+
+
+
+#### 列表ListView
+
+**参考: https://hellosure.github.io/android/2015/06/02/android-viewholder **
+
+ListView需要与适配器配合使用，列表项是适配器绑定的数据，用于大量数据的（通常是滑动）显示，现可使用RecyclerView替代
+
+列表项Item点击会触发ItemClick事件，由方法onItemClick()监听
+
+列表项Item长按会触发ItemLongClick事件，由方法onItemLongClick监听
+
+ListView会调用适配器中的方法进行数据显示，适配器中的几个最基本方法有
+
+```java
+class MyAdapter extends BaseAdapter
+    {
+        private Context context;
+        public MyAdapter(Context context)
+        {
+            this.context = context;
+        }
+        @Override
+        public int getCount() {
+            // How many items are in the data set represented by this Adapter.(在此适配器中所代表的数据集中的条目数)
+            return 0;
+        }
+        @Override
+        public Object getItem(int position) {
+            // Get the data item associated with the specified position in the data set.(获取数据集中与指定索引对应的数据项)
+            return null;
+        }
+        @Override
+        public long getItemId(int position) {
+            // Get the row id associated with the specified position in the list.(取在列表中与指定索引对应的行id)
+            return 0;
+        }
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            // Get a View that displays the data at the specified position in the data set.
+            return null;
+        } 
+    }
+```
+
+ ListView加载数据都是在适配器的public View getView(int position, View convertView, ViewGroup parent) {}方法中进行的,convertView是缓存View，避免每次重新从布局文件中加载xml，使用findViewById获取View并加载
+
+ getView有几种使用方式：
+
+第一种：没有任何处理，不建议这样写。如果数据量少看将就，但是如果列表项数据量很大的时候，会每次都重新创建View，设置资源，严重影响性能，所以从一开始就不要用这种方式 
+
+```java
+@Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View item = mInflater.inflate(R.layout.list_item, null);
+            ImageView img = (ImageView)item.findViewById(R.id.img)
+            TextView title = (TextView)item.findViewById(R.id.title);
+            TextView info = (TextView)item.findViewById(R.id.info);
+            img.setImageResource(R.drawable.ic_launcher);
+            title.setText("Hello");
+            info.setText("world");
+          
+            return item;
+        }
+```
+
+ 第二种ListView优化：通过缓存convertView,这种利用缓存contentView的方式可以判断如果缓存中不存在View才创建View，如果已经存在可以利用缓存中的View，提升了性能 
+
+```java
+public View getView(int position, View convertView, ViewGroup parent) {
+            if(convertView == null)
+            {
+                convertView = mInflater.inflate(R.layout.list_item, null);
+            }
+                                                                                         
+            ImageView img = (ImageView)convertView.findViewById(R.id.img)
+            TextView title = (TextView)convertView.findViewById(R.id.title);
+            TextView info = (TextView)ConvertView.findViewById(R.id.info);
+            img.setImageResource(R.drawable.ic_launcher);
+            title.setText("Hello");
+            info.setText("world");
+                                                                                             
+            return convertView;
+        }
+        
+```
+
+第三种ListView优化：通过convertView+ViewHolder来实现，ViewHolder就是一个静态类，使用 ViewHolder 的关键好处是缓存了显示数据的视图（View），加快了 UI 的响应速度。
+
+当我们判断 convertView == null 的时候，如果为空，就会根据设计好的List的Item布局（XML），来为convertView赋值，并生成一个viewHolder来绑定converView里面的各个View控件（XML布局里面的那些控件）。再用convertView的setTag将viewHolder设置到Tag中，以便系统第二次绘制ListView时从Tag中取出。（看下面代码中）
+
+如果convertView不为空的时候，就会直接用convertView的getTag()，来获得一个ViewHolder。
+
+```java
+//在外面先定义，ViewHolder静态类
+static class ViewHolder
+{
+    public ImageView img;
+    public TextView title;
+    public TextView info;
+}
+//然后重写getView
+@Override
+public View getView(int position, View convertView, ViewGroup parent) {
+    ViewHolder holder;
+    //第一次加载View
+    if(convertView == null)
+    {
+        holder = new ViewHolder();
+        convertView = mInflater.inflate(R.layout.list_item, null);
+        holder.img = (ImageView)item.findViewById(R.id.img)
+        holder.title = (TextView)item.findViewById(R.id.title);
+        holder.info = (TextView)item.findViewById(R.id.info);
+        convertView.setTag(holder);//绑定一个View对象的引用
+    }else
+    {
+        holder = (ViewHolder)convertView.getTag();
+    }
+        holder.img.setImageResource(R.drawable.ic_launcher);
+        holder.title.setText("Hello");
+        holder.info.setText("World");
+    }
+                                                                                         
+    return convertView;
+}
+```
+
+#### RecyclerView+RecyclerView.ViewHolder+RecyclerView.Adapter+CardView实现滑动列表
+
+**参考： https://www.jianshu.com/p/4fc6164e4709 **
+
+**https://developer.android.com/guide/topics/ui/layout/recyclerview **
+
+**https://blog.csdn.net/xx326664162/article/details/61199895 **
+
+**https://zhuanlan.zhihu.com/p/24807254 **
+
+可使用ListView添加item实现列表滑动，数据源来源于Adapter， ViewHolder 通过内部维护View对象减少 findViewById() 的使用以及避免过多地 inflate view ，更改数据时直接更改以前的View数据即可
+
+ RecyclerView用于在有限的窗口展现大量的数据 ，与ListView功能类似，但RecyclerView标准化了ViewHolder，而且异常的灵活，可以轻松实现ListView实现不了的样式和功能 
+
+ 在使用RecyclerView时候，必须指定一个适配器Adapter和一个布局管理器LayoutManager。适配器继承`RecyclerView.Adapter`类，具体实现类似ListView的适配器，取决于数据信息以及展示的UI，适配器内部使用`RecyclerView.ViewHolder`绑定View引用，加快速度。
+
+```java
+mRecyclerView = (RecyclerView) findViewById(R.id.my_recycler_view);
+// 设置布局管理器
+mRecyclerView.setLayoutManager(mLayoutManager);
+// 设置adapter
+mRecyclerView.setAdapter(mAdapter);
+// 设置Item添加和移除的动画
+mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+// 设置Item之间间隔样式
+mRecyclerView.addItemDecoration(mDividerItemDecoration);
+```
+
+RecyclerView提供了三种布局管理器：
+
+- LinerLayoutManager 以垂直或者水平列表方式展示Item
+- GridLayoutManager 以网格方式展示Item
+- StaggeredGridLayoutManager 以瀑布流方式展示Item
+
+具体步骤为：
+
+1. 在Fragment中添加RecyclerView
+
+2. 写配套的Adapter并绑定ViewHolder，必须重写三个必要方法以供布局管理器回调
+
+   初始化时对于先执行onCreateViewHolder，用于创建新的View并绑定ViewHolder
+
+   然后执行onBindViewHolder，参数有一个holder，用于对holder绑定的View做数据填充（更改）
+
+   ```java
+   public class FocusRecyclerViewAdapter extends  RecyclerView.Adapter<FocusRecyclerViewAdapter.FocusRecyclerViewHolder> {
+       private String[] contentCollection;//要变化的数据集
+   
+       //加快UI速度，内部维护ViewHolder，适配器维护CardView并进行加载
+       public static class FocusRecyclerViewHolder extends RecyclerView.ViewHolder{
+           public CardView cardView;
+           public FocusRecyclerViewHolder(CardView cardView){
+               super(cardView);//使用RecycleView内部的ViewHolder绑定一个View
+               this.cardView=cardView;
+           }
+       }
+       //构造器，提供数据集
+       public FocusRecyclerViewAdapter(String[] dataSet){
+           contentCollection=dataSet;
+       }
+   
+       //创建一个新的View,即适配器数据子项，由layout manager进行回调，加快UI速度，内部绑定ViewHolder
+       @Override
+       public FocusRecyclerViewHolder onCreateViewHolder(ViewGroup parent,int viewType){
+           //向父容器FocusFragment添加CardView
+           CardView cardView= (CardView) LayoutInflater.from(parent.getContext()).inflate(R.layout.focus_recyclerview_cardview,parent,false);
+           //绑定新建的CardView到ViewHolder
+           FocusRecyclerViewHolder focusRecyclerViewHolder=new FocusRecyclerViewHolder(cardView);
+           return focusRecyclerViewHolder;
+       }
+   
+       //使用position位置处的内容替换指定view的内容，由layout manager进行回调，数据变换函数
+       @Override
+       public void onBindViewHolder(FocusRecyclerViewHolder holder,int position){
+           TextView textView=holder.cardView.findViewById(R.id.cardViewTextView);
+           textView.setText(contentCollection[position]);
+       }
+   
+       //返回数据集长度，由layout manager回调
+       @Override
+       public int getItemCount() {
+           return contentCollection == null ? 0 : contentCollection.length;
+       }
+   }
+   ```
+
+3. 在有RecyclerView的Fragment中加载RecyclerView并绑定布局管理器，适配器
+
+```java
+public class FocusFragment extends Fragment {
+    private View view;
+    private RecyclerView recyclerView;
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        view=inflater.inflate(R.layout.fragment_home_focus, container,false);//加载布局进入父容器HomeFragment
+
+        recyclerView=view.findViewById(R.id.focusRecyclerView);//组件RecyclerView
+        recyclerView.setLayoutManager(new StaggeredGridLayoutManager(3, OrientationHelper.VERTICAL));//设置布局管理器
+        recyclerView.setAdapter(new FocusRecyclerViewAdapter(new String[]{"sad","qwe","pop","dsa","dsa","das","asd"}));//设置数据适配器，提供数据集
+
+        return view;
+    }
+}
+```
+
+4. 在2步骤中适配器的 onCreateViewHolder方法中创建新的View并加载xml，因此一般使用CardView布局作为RecyclerView的子项进行加载，具体内容格式要在CardView中配置，RecyclerView只负责加载View，滑动时动态更改View。CardView可单独抽出作为xml被加载，可设置height与width
+
+**细节**
+
+RecyclerView对ViewHolder也进行了一定的封装，但是如果你仔细观察，你会发出一个疑问，ListView里面有个getView，它返回View为Item的布局，那么RecyclerView这个Item的样子在哪控制？
+
+其实是这样的，我们创建的ViewHolder必须继承RecyclerView.ViewHolder，这个RecyclerView.ViewHolder构造时必须传入一个View，这个View相当于我们ListView getView中的convertView （即：inflate的item布局需要传入）。
+
+还有一点，ListView中convertView是复用的，在RecyclerView中，是把ViewHolder类作为缓存的单位了，然后convertView作为ViewHolder的成员变量保持在ViewHolder中，也就是说，假设屏幕显示10个条目，则会创建10个ViewHolder缓存起来，每次复用的是ViewHolder，所以他把getView这个方法变为了onCreateViewHolder。
+
+**分割线**
+
+如果使用的是线性布局，则可以使用如下方法设置间隔，间隔样式来源于默认间隔样式
+
+ mRecyclerView.addItemDecoration(new DividerItemDecoration(this,DividerItemDecoration.VERTICAL));  
+
+#### SwipeRefreshLayout下拉刷新
+
+SwipeRefreshLayout是一个下拉刷新布局，只能有一个孩子，常与RecyclerView配合使用
+
+将RecyclerView放置于SwipeRefreshLayout下即可实现下拉刷新
+
+ 在SwipeRefleshLayout中的SwipeRefreshLayout.OnRefreshListener实现OnRefresh()方法即可在onReflesh()方法中，进行刷新数据操作，数据改变完毕后，使用适配器的notifyDataChanged()方法通知适配器数据集改变，调用 swipeRefreshView.setRefreshing(false); 终止刷新，
+
+具体步骤为：
+
+1. 在Activity或Fragment中加入SwipeRefreshLayout，添加能滑动的孩子，如ListView/RecyclerView
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/swipeFocusRefreshLayout"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/focusRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </androidx.recyclerview.widget.RecyclerView>
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+```
+
+2. 在Activity或Fragment中加载SwipeRefreshLayout，设置监听器，在onRefresh中设置数据处理方法
+
+```java
+        focusRecyclerViewAdapter=new FocusRecyclerViewAdapter(dataSet);//初始化适配器，绑定数据集
+        //下滑刷新布局组件
+        final SwipeRefreshLayout swipeRefreshLayout=(SwipeRefreshLayout)view.findViewById(R.id.swipeFocusRefreshLayout);
+        //下滑刷新监听器
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                dataSet.add("d"+test);
+                focusRecyclerViewAdapter.notifyDataSetChanged();//适配器通知数据集改变，回调onBindViewHolder，根据状态决定是否加载onCreteViewHolder
+
+                swipeRefreshLayout.setRefreshing(false);//数据处理完毕，终止刷新状态
+            }
+        });
+```
+
+
+
+####  CardView
+
+**参考： https://developer.android.com/guide/topics/ui/layout/cardview **.
+
+通常配合RecyclerView实现滑动列表
+
+
+
+### 注解框架butterknife（黄油刀）
+
+### 引入
+
+ 在Android Studio中可以，很快直接引入，我们可以，选择项目->右键->open modules setting，然后选择Dependencies，选择绿色的Add按钮，输入com.jakewharton:butterknife:7.0.1或者com.jakewharton:butterknife:6.1.0等等，引入框架
+
+#### @InjectView()
+
+注入View，等价于findViewById(),例：
+
+```java
+@InjectView(R.id.listview)
+
+ListView listview;
+```
+
+
+
+### 杂记
+
+#### Fragment中发现View
+
+Activity中使用findViewById()，Fragment中使用getView().findViewById()，getView()返回当前视图的根视图
+
+如果在onCreateView中使用inflater加载布局则不能这样用，应该
+
+```java
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment, container, false);
+        Button btn = (Button) view.findViewById(R.id.btn);
+    }
+
+```
+
+#### RadioButton美化
+
+```xml
+        <RadioButton
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"//背景
+            android:button="@null"//这样设置可以去掉RadioButton的默认样式
+            android:drawableTop="@mipmap/creation"
+            android:gravity="center"//显示内容居中"
+            android:text="@string/title_creation"
+            android:textColor="@color/colorPrimary"></RadioButton>
+```
+
+
+
+#### 去除顶部默认的标题栏
+
+res/values/styles将AppTheme的值改为Theme.AppCompat.Light.NoActionBar
+
+#### 常见错误
+
+#####  Didn't find class "android.support.v4.view.ViewPager"
+
+改为androidx.viewpager.widget.ViewPager

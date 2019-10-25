@@ -1,3 +1,5 @@
+**参考： https://zhuanlan.zhihu.com/p/42343690 **
+
 #### 概述
 
 Servlet作为中间件用于数据的交互处理，先描述一下处理过程
@@ -7,13 +9,33 @@ Servlet作为中间件用于数据的交互处理，先描述一下处理过程
 1. PrintWriter out=response.getWriter();
 2. out.println()
 
-为了在响应中动态加载并显示信息，出现了各种后台语言/技术
+ ![preview](https://pic2.zhimg.com/v2-fc8bb977784e7b703bfd157192825899_r.jpg)  
 
-可以将jsp看成这样一种后台技术
+可以看到，返回语句通过response静态打印输出，如果要返回定制页面，需要专门的处理类处理完数据后用对象存储，通过out接着不断加载打印信息
 
-request->容器识别jsp->加载jsp，转换成servlet后进行数据处理并返回页面（数据可以实时嵌入页面中）
+ **我们的主要目的就是希望在最终输出的html的代码中嵌入后台数据罢了。**除了把html语句拿出来在Servlet里拼接好再输出这种方式外，我们也可以直接在html语句中写入动态数据 
 
-作为后台动态语言，jsp自有其语法格式，但是没有实现前后端分离
+为了在响应中动态加载并显示信息，出现了各种后台语言/技术，可以将jsp看成这样一种后台技术
+
+   JSP全称Java Server Page，直译就是“运行在服务器端的页面”。我们可以直接在JSP文件里写HTML代码，使用上把它**当做**HTML文件。而且JSP中HTML/CSS/JS等的写法和HTML文件中的写法是一模一样的。但它毕竟不是HTML，而且本质差了十万八千里。因为我们还可以把Java代码内嵌在JSP页面中，很方便地把动态数据渲染成静态页面。这一点，HTML打死都做不到。 浏览器只能解析静态页面 。
+
+当有人请求JSP时，服务器内部会经历一次动态资源（JSP）到静态资源（HTML）的转化，服务器会自动帮我们把JSP中的HTML片段和数据拼接成静态资源响应给浏览器。也就是说JSP是运行在服务器端，但最终发给客户端的都已经是转换好的HTML静态页面（在响应体里）。
+
+即：**JSP = HTML + Java片段**（各种标签本质上还是Java片段）![preview](https://pic3.zhimg.com/v2-092cb7fb1de6877f53751531d05675de_r.jpg)   
+
+request->容器识别jsp->服务器端加载jsp，转换成servlet后进行数据处理并返回静态页面（数据可以实时嵌入页面中）
+
+ ![preview](https://pic2.zhimg.com/v2-83c1a7e3ae1e9d236ce568347dd2c3b1_r.jpg) 
+
+ ![preview](https://pic2.zhimg.com/v2-f936b7b3ddef8248879c7f414475d459_r.jpg) 
+
+ 原来，为了不让Java程序员一行行复制HTML代码到Servlet里，**SUN公司干脆让Java程序员直接把HTML写在了Servlet里！**但是毕竟SUN还没有那么明目张胆，好歹让这个Servlet伪装了一把，打扮成JSP，然后跟程序员说：看，我搞了个JSP，这家伙可牛逼了，你能在上面同时写HTML和Java代码哦。
+
+得了吧，等你写完JSP，回头访问时，Tomcat就把这个JSP翻译成Servlet，原先写在JSP里的HTML代码就**自动**放在了out.println()里啦！**相当于程序帮我做了“逐行复制HTML代码到Servlet”这一步。** 
+
+ ![preview](https://pic1.zhimg.com/v2-955ff75e5217fe00274a13ca880cb80c_r.jpg) 
+
+作为后台动态语言，jsp自有其语法格式
 
 ### 基本语法
 

@@ -14,7 +14,27 @@
 
 描述系统静态结构，即类属性与类之间的关系
 
-![1569834312567](C:\Users\lsl\AppData\Roaming\Typora\typora-user-images\1569834312567.png)
+![image.png](https://i.loli.net/2019/10/14/X8l5cSDIWmadPfs.png)
+
+类名--属性--操作（方法）
+
+##### 关联关系Association，一个类内部引用另一个类对象
+
+单线箭头
+
+![image.png](https://i.loli.net/2019/10/14/VrSfTxtFlwmQH2o.png)
+
+重数性关联：
+
+##### 泛化关系Generalization，继承关系
+
+![image.png](https://i.loli.net/2019/10/14/dk5InuDLtAJzVRa.png)
+
+实线空心三角
+
+##### 实现关系(Realization)，接口与实现的关系
+
+虚线空心三角
 
 ### 面向对象模型OOM
 

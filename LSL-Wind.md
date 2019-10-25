@@ -87,7 +87,7 @@ sudo systemctl enable mysql
 
 ![image.png](https://i.loli.net/2019/10/11/tr3acqOohjZklP7.png)
 
-entity：放置avaBean（POJO），比如说用户user，customer等实体
+entity：放置javaBean（POJO），比如说用户user，customer等实体
 
 mapper：接口，连接数据库与项目的中间层，同时对数据库的操作增查删改也写在里面
 
@@ -150,15 +150,114 @@ foreign key(user_id) references user(id)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ```
 
+### api 文档
+
+
+
+
+
 ### 后端设计
 
 先不管前端，前端样式处理可能需要耗费大量时间，先专注后台数据处理
 
 #### 创建实体类（DAO）User/Article
 
-根据设计的数据库表创建对应的DAO，放于包entity下
+根据设计的数据库表创建对应的DAO，放于包entity下，即创建数据库表对应的java Bean，略
+
+#### 配置SpringMVC
+
+##### pom.xml导入springMVC依赖
+
+```xml
+<dependency>
+  <groupId>org.springframework</groupId>
+  <artifactId>spring-web</artifactId>
+  <version>4.3.1.RELEASE</version>
+</dependency>
+<dependency>
+  <groupId>org.springframework</groupId>
+  <artifactId>spring-webmvc</artifactId>
+  <version>4.3.1.RELEASE</version>
+</dependency>
+```
+##### web.xml中配置DispatcherServlet与映射
+
+```xml
+<web-app>
+    <servlet>
+        <servlet-name>home</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <load-on-startup>1</load-on-startup><!--启动时立即加载Servlet-->
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>home</servlet-name>
+        <url-pattern>/home/*</url-pattern>
+    </servlet-mapping>
+
+</web-app>
+```
+
+所有/home下的url请求都由DispatcherServlet调度，配置其他路径同理，对应的要写相应的控制器并配置视图控制器
+
+##### WEB-INF下配置home-servlet.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd
+        http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd">
+
+    <!-- 开启注解 -->
+    <mvc:annotation-driven />
+    <!-- 配置自动扫描的包，完成 Bean 的创建和自动依赖注入的功能 -->
+    <context:component-scan base-package="controller" />
+    <!-- 默认静态资源处理 -->
+    <mvc:default-servlet-handler/>
+    <!-- 配置视图解析器 -->
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/pages/"></property>
+        <property name="suffix" value=".jsp"></property>
+    </bean>
+</beans>
+```
+
+开启注解，配置视图解析器，前缀为webapp下的/pages，后缀为jsp，使用jsp可在response时更新数据
+
+处理过程为前端表单数据请求request->DispatcherServlet（绑定前缀路径-servlet.xml，控制器映射要省略该前缀）->调度Controller找寻RequestMapping处理，调度过程中DispatcherServlet绑定的url前缀是缺省的，不用再加->根据返回值查找视图解析器下的资源，还是由DispatcherServlet调度，如果返回的View名称与映射路径相同则会陷入死循环，DispatcherServlet优先分配到控制器，控制器没有映射返回View，但是前端仍然显示控制器映射的url，即后端View资源的url不会显示到->返回对应View
 
 #### 用户注册
+
+从前端读取表单数据，检验数据（邮箱）是否存在，将数据插入数据库中
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

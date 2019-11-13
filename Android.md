@@ -295,7 +295,7 @@ public void onDateSet(DatePicker view, int year, int monthOfYear,int dayOfMonth)
 
 #### 菜单Menu
 
-每个Activity默认都包含一个Menu对象，因此编写菜单只需要编写菜单项与对应的事件监听即可，有多中不同样式的菜单，加载菜单时重写相应方法即可
+
 
 ##### 15.选项菜单OptionMenu
 
@@ -695,7 +695,38 @@ public class MyActivity extends ActionBarActivity {
 } 
  ```
 
-### 高级使用
+### 组件
+
+#### 根布局
+
+根布局作为View的容器，既可以是传统layout也可以是View，取决于
+
+#### 菜单menu
+
+每个Activity默认都包含一个Menu对象，因此编写菜单只需要编写菜单项与对应的事件监听即可，有多中不同样式的菜单，加载菜单时重写相应方法即可，菜单menu需要一个xml布局并在ActionBar/ToolBar上挂载
+
+**1.创建menu菜单与menu xml布局文件**
+
+选中res文件夹---->右键---->New----->Android resouce directory----->Resouce Type选下拉列表中的menu，点击ok，就在res文件夹下新建了menu文件夹
+
+**2.在xml中添加菜单子项MenuItem**
+
+例如
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/home_menu_search"
+        android:title="搜索"
+          <!--指定一个View作为子项-->
+        app:actionViewClass="androidx.appcompat.widget.SearchView" />
+</menu>
+```
+
+
 
 #### RadioGroup+RadioButton实现底部导航
 
@@ -725,84 +756,59 @@ public class MyActivity extends ActionBarActivity {
             android:textColor="@color/colorPrimary"/>
 ```
 
-#### 导航库Navigation：专为单Activity多Fragment设计
+#### 导航库Navigation：多Fragment跳转
 
-1. **Navigation graph（导航图）:**
-   这是一个包含所有位置导航相关信息的XML资源文件。这里包括应用程序当中的所有单独的内容区域（被称为目标视图），以及连接在应用程序当中各个“目标”的路径。
-2. **NavHost:**
-   一个用于展示导航图当中目标视图的空的容器。Navigation组件包含一个实现NavHostFragment的默认的NavHost，它是用来展示fragment的目的地。
-3. **NavController:**
-   管理NavHost中的应用程序导航的对象。 当用户在整个应用程序中移动时，NavController会协调NavHost中目标内容的交换。
+**https://developer.android.com/reference/androidx/navigation/Navigation.html**
 
-1. 在layout/navigation下，新建资源文件 选择**Resource type**为**Navigation** ，名随意
+专为单Activity多Fragment设计，每个Activity都与一个navigation graph绑定并包含一个NavHostFragment
 
-在设计中基本组件就是fragment，主要配置fragment与fragment之间的action即可
+添加依赖：
 
-添加fragment时直接添加fragment即可，同时要写配套的fragmen类与xml布局
+```xml
+implementation "androidx.navigation:navigation-fragment:$nav_version"
+implementation "androidx.navigation:navigation-ui:$nav_version"
+```
+
+**1.导航放在专门的导航文件夹下,因此要新建文件夹navigation**
+
+1. In the Project window, right-click on the `res` directory and select **New > Android Resource File**. The **New Resource File** dialog appears.
+2. Type a name in the **File name** field, such as "nav_graph".
+3. Select **Navigation** from the **Resource type** drop-down list, and then click **OK**.
+
+**2.在主Activity下指定导航xml文件，指定NavHost**
+
+NavHost：NavHost是一个空容器，相当于Fragment切换时当前Fragment显示的容器，在主Activity的xml布局下要指定一个导航xml文件并指定一个NavHost
 
 ```xml
     <fragment
-        android:id="@+id/navigation_me"
-        android:name="com.example.allbooks.ui.me.MeFragment"
-        android:label="@string/title_me"
-        tools:layout="@layout/fragment_me" />
+        android:id="@+id/nav_host_fragment"
+        android:name="androidx.navigation.fragment.NavHostFragment"<!--引入组件，必不可少-->
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+
+        app:defaultNavHost="true"<!--表示点击返回键返回上一个页面-->
+        app:navGraph="@navigation/nav_graph" /><!--指定导航图xml文件-->
 ```
 
-设计时指定action
+**3.在导航图xml文件配置要跳转的Fragment**
 
- ![img](https://upload-images.jianshu.io/upload_images/900279-26ae44360923e7b7.png?imageMogr2/auto-orient/strip|imageView2/2/w/1200/format/webp) 
+需设置一个开始Fragment，其余的点击拖拉即可，Fragment必须先设置好才行
 
-2. 在Activity布局中指定Navigation的宿主（Host）:
+**4.设置Fragment跳转**
 
-```xml
-?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MainActivity">
+代码中的Fragment跳转由NavController控制，每一个NavHost都有一个NavController用于管理Fragment的跳转，获取NavController有三种方法，适用于不同的场景
 
-    <fragment
-        android:id="@+id/my_nav_host_fragment"
-        android:name="androidx.navigation.fragment.NavHostFragment"
-        app:navGraph="@navigation/nav_graph"
-        app:defaultNavHost="true"
-        />
-
-</android.support.constraint.ConstraintLayout>
+```java
+NavHostFragment.findNavController(Fragment)
+Navigation.findNavController(Activity, @IdRes int viewId)
+Navigation.findNavController(View)
 ```
 
-指定宿主为类NavHostFragment，这个不能变，而app:navGraph="@navigation/nav_graph"就是刚刚创建的导航xml布局的文件名
-
-3. 编辑导航中得fragment
-
- 在起始Fragment上点击右键，选择**Set Start Destination**，将它设置为起始位置，当宿主（Host）Activity启动的时候，它会做为默认的页面替换布局中的`NavHostFragment`。 
-
-3. 在主Activity下使用
-
-覆写`onSupportNavigateUp()`方法：
-
-```css
-@Override
-public boolean onSupportNavigateUp() {
-    return Navigation.findNavController(this, R.id.nav_host_fragment).navigateUp();
-}
-```
-
-使用[`NavController`](https://link.jianshu.com/?t=https%3A%2F%2Fdeveloper.android.com%2Freference%2Fandroidx%2Fnavigation%2FNavController.html)
-来发起页面跳转，可以通过以下方法获取`NavController`:
-
-- [`NavHostFragment.findNavController(Fragment)`](https://link.jianshu.com/?t=https%3A%2F%2Fdeveloper.android.com%2Freference%2Fandroidx%2Fnavigation%2Ffragment%2FNavHostFragment.html%23findNavController(android.support.v4.app.Fragment))
-- [`Navigation.findNavController(Activity, @IdRes int viewId)`](https://link.jianshu.com/?t=https%3A%2F%2Fdeveloper.android.com%2Freference%2Fandroidx%2Fnavigation%2FNavigation.html%23findNavController(android.app.Activity%2C%20int))
-- [`Navigation.findNavController(View)`](https://link.jianshu.com/?t=https%3A%2F%2Fdeveloper.android.com%2Freference%2Fandroidx%2Fnavigation%2FNavigation.html%23findNavController(android.view.View))
-
-获取到`NavController`后，就可以通过它的`navigate()`方法发起页面跳转，`navigate()`接受action id 或 fragment id 以及导航选项及Bundle参数等作为参数。
-
-```
-NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);//导航栏控制器
-```
+获取之后返回一个NavController对象，调用navigate(int id)即可实现Fragment的跳转
 
 
 
@@ -1012,17 +1018,56 @@ ToolBar继承的是ViewGroup,也就是说Toolbar 是一个ViewGroup 容器,内�
 
 action menu在res下的menu目录中写对应的menu文件，加载即可
 
-#### 搜索SerachView
+#### 搜索框SerachView
 
-**参考: https://www.jianshu.com/p/00cb87a2964f **
+SearchView属性
 
-常与ToolBar搭配使用
+模式有三种：
 
+* iconified(false);搜索框默认是开启的，左侧搜索图标在搜索框中，可以通过右侧叉叉关闭搜索框
+* iconifiedByDefault(false); 右侧一开始没有叉叉，有输入内容后出现叉叉（常用）
+* queryHint：提示文字
 
+事件监听：
 
+```java
+    //搜索图标按钮的点击事件
+    mSearchView.setOnSearchClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Toast.makeText(MainActivity.this, "打开搜索框", Toast.LENGTH_SHORT).show();
+        }
+    });
 
+    //搜索框内容变化监听
+    mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+        @Override
+        public boolean onQueryTextSubmit(String query) {//点击提交按钮时
+            Toast.makeText(MainActivity.this, "Submit---提交", Toast.LENGTH_SHORT).show();
+            return true;
+        }
 
+        @Override
+        public boolean onQueryTextChange(String newText) {//搜索框内容变化时
+            if (!TextUtils.isEmpty(newText)) {
+//              mListView.setFilterText(newText);
+                mAdapter.getFilter().filter(newText);
+            } else {
+                mListView.clearTextFilter();
+            }
+            return true;
+        }
+    });
 
+    //搜索框展开时点击叉叉按钮关闭搜索框的点击事件
+    mSearchView.setOnCloseListener(new SearchView.OnCloseListener() {
+        @Override
+        public boolean onClose() {
+            Toast.makeText(MainActivity.this, "关闭搜索框", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+    });	
+```
 
 #### 列表ListView
 
@@ -1270,6 +1315,10 @@ RecyclerView对ViewHolder也进行了一定的封装，但是如果你仔细观�
 
  mRecyclerView.addItemDecoration(new DividerItemDecoration(this,DividerItemDecoration.VERTICAL));  
 
+##### 事件监听
+
+每个View都有onClickListener，实现一个自己的事件监听，传递给Adapter，在绑定时传给ViewHolder，让ViewHolder实现点击监听的逻辑
+
 #### SwipeRefreshLayout下拉刷新
 
 SwipeRefreshLayout是一个下拉刷新布局，只能有一个孩子，常与RecyclerView配合使用
@@ -1316,15 +1365,302 @@ SwipeRefreshLayout是一个下拉刷新布局，只能有一个孩子，常与Re
         });
 ```
 
+#### RecyclerView的上拉加载/加载多种子项视图
 
+上拉加载基本思想就是原本的数据（如CardView）View队列最末尾加上一个新的View(如ProgressBar)，用于上拉加载时的显示，在Fragment中设置滑动监听器，当滑动到最末尾时更新数据并设置上面的ProgressBar隐藏，通知UI线程更新
+
+1.RecyclerView的适配器内部维护自定义状态量，根据状态加载不同布局并绑定ViewHolder，ViewHolder内部维护不同的View组件，在OnCreateViewHolder中动态绑定View并进行组件加载，因此RecyclerView可以适配多种不同的View，只要管好适配器就行。
+
+```java
+public class FocusRecyclerViewAdapter extends  RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private List<JSONObject> contentCollection;//数据集
+    private int count=0;//本地测试数据循环使用下标
+
+    private int normalType=0;//正常加载的cardView
+    private int footType=1;//底部加载的FooterView，实际上就是一个ProgressBar
+    private boolean loading=true;//判断是否正在加载，用于控制加载条ProgressBar的显示
+
+    /**
+     * 内部ViewHolder，加快View加载速度，绑定CardView，用于数据显示
+     */
+    public static class FocusRecyclerViewHolder extends RecyclerView.ViewHolder{
+        public CardView cardView;
+        public FocusRecyclerViewHolder(CardView cardView){
+            super(cardView);//使用RecycleView内部的ViewHolder绑定一个View
+            this.cardView=cardView;
+        }
+    }
+
+    /**
+     * 内部FooterViewHolder，绑定一个ProgressBar，更好的用户体验
+     */
+    public static class FooterViewHolder extends RecyclerView.ViewHolder{
+        private ProgressBar loadMore;
+        public FooterViewHolder(View view){
+            super(view);
+            this.loadMore=((LinearLayout)view).findViewById(R.id.load_more);
+        }
+    }
+
+    /**
+     * 构造器，提供数据集
+     * @param dataSet 适配器需要的数据集
+     */
+    public FocusRecyclerViewAdapter(List<JSONObject> dataSet){
+        contentCollection=dataSet;
+    }
+
+    /**
+     * 由于RecyclerView不提供上拉加载功能，所以自定义重写返回子项Item的方法，要判断返回的子项是正常的CardView还是
+     * 底部加载条progressBar，该方法在使用onCreateViewHolder时作为参数viewType回调
+     * @param position 数据集项目位置
+     * @return View类型，CardView由normalType代表，ProgressBar由footType代表
+     */
+    @Override
+    public int getItemViewType(int position){
+        //正好到了底部，需要加载更多,比如有15条数据,索引从0开始，第15条是ProgressBar,getItemCount()返回16
+        System.out.println(position);
+        if(position==getItemCount()-1){
+            return footType;
+        }else {
+            return normalType;
+        }
+    }
+
+    /**
+     * 创建一个新的View,即适配器数据子项，由layout manager进行回调，加快UI速度，内部绑定ViewHolder
+     * 根据viewType的不同加载不同的布局文件
+     * @param parent 父容器，也就是RecyclerView
+     * @param viewType 要加载的View类型，如果子类不指定，父类永远为0
+     * @return ViewHolder，绑定一个View
+     */
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType){
+        RecyclerView.ViewHolder holder;
+        if(viewType==normalType){
+            //加载布局文件，向父容器FocusFragment添加CardView
+            CardView cardView= (CardView) LayoutInflater.from(parent.getContext()).inflate(R.layout.focus_recyclerview_cardview,parent,false);
+            holder=new FocusRecyclerViewHolder(cardView);
+        }else{
+            View linearLayout =LayoutInflater.from(parent.getContext()).inflate(R.layout.progress_bar,parent,false);
+            holder=new FooterViewHolder(linearLayout);
+        }
+        return holder;
+    }
+
+    /**
+     * 使用position位置处的内容替换指定view的内容，由layout manager进行回调，用于给ViewHolder中的数据做加载(或变换数据)
+     * 分类型绑定数据为CardView还是ProgressBar
+     * @param holder holder，可能为CardView的holder，也可能为ProgressBar的holder，分别处理
+     * @param position 子项的位置
+     */
+    @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder holder,int position){
+        if(holder instanceof FocusRecyclerViewHolder){
+            CardView cardView=((FocusRecyclerViewHolder)holder).cardView;//获取ViewHolder绑定的数据
+            // 对CardView中的数据做实时绑定，使用findViewById获取内部组件
+            JSONObject article=contentCollection.get(count);
+            TextView title=cardView.findViewById(R.id.articleTitle);
+            TextView introduce=cardView.findViewById(R.id.articleIntroduce);
+            TextView author=cardView.findViewById(R.id.articleAuthor);;
+            try{
+                title.setText(article.getString("title"));
+                introduce.setText(article.getString("content"));
+                author.setText(article.getString("author")+" "+article.getString("visits")+" "+article.getString("thumbs"));
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            count=(count+1)%contentCollection.size();//取模循环
+        }else{
+            ProgressBar progressBar=((FooterViewHolder)holder).loadMore;
+            if(!loading){
+                progressBar.setVisibility(View.GONE);
+            }
+        }
+
+        //设置item-CardView事件监听
+    }
+
+    /**
+     * 返回数据集长度，由layout manager回调
+     * @return 返回数据集长度，不为null加1是因为要加载底部footerView
+     */
+    @Override
+    public int getItemCount() {
+        return contentCollection == null ? 0 : contentCollection.size()+1;
+    }
+
+    /**
+     * 由Recycler调用，当加载完数据时，调用该方法设置ProgressBar显示状态并通知数据集改变
+     * @param state ProgressBar的状态，true时显示，false时不显示
+     */
+    public void setLoadState(boolean state){
+        this.loading=state;
+        notifyDataSetChanged();
+        this.loading=true;//通知完数据集改变之后，将上一步progressBar隐藏，之后新的progressBar仍然显示
+    }
+}
+
+```
+
+2. 对RecyclerView设置事件监听
+
+   ```java
+           //为recyclerView设置滑动监听器，加载更多数据
+           recyclerView.addOnScrollListener(new RecyclerOnScrollListener() {
+               @Override
+               public void onLoadMore() {//这里模拟网络数据传输
+                   new Timer().schedule(new TimerTask() {
+                       @Override
+                       public void run() {
+                           view.post(new Runnable() {
+                               @Override
+                               public void run() {
+                                   initData();
+                                   focusRecyclerViewAdapter.setLoadState(false);
+                               }
+                           });
+                       }
+                   },1000);
+   
+               }
+           });
+           
+               /**
+        * RecyclerView的滑动监视器，RecyclerView必须使用线性布局管理器，因为onScrollStateChanged(RecyclerView recyclerView, int newState)
+        * 方法中要使用
+        */
+       abstract class RecyclerOnScrollListener extends RecyclerView.OnScrollListener {
+           private boolean isSlidingUpward = false;//用来标记是否正在向上滑动
+   
+           /**
+            * 当滑动状态改变时调用该方法，如停止滑动
+            * @param recyclerView 调用该监视器的RecyclerView
+            * @param newState 表示滑动状态
+            */
+           @Override
+           public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+               super.onScrollStateChanged(recyclerView, newState);
+               LinearLayoutManager manager = (LinearLayoutManager) recyclerView.getLayoutManager();
+               // 当不滑动时
+               if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                   //获取最后一个完全显示的itemPosition
+                   int lastItemPosition = manager.findLastCompletelyVisibleItemPosition();
+                   int itemCount = manager.getItemCount();
+   
+                   // 判断是否滑动到了最后一个item，并且是向上滑动
+                   if (lastItemPosition == (itemCount - 1) && isSlidingUpward) {
+                       //加载更多
+                       onLoadMore();
+                   }
+               }
+           }
+   
+           /**
+            * 正在滑动的过程中执行该方法，内部维护的变量isSlidingUpward表示是否正在向上滑动
+            * @param recyclerView 调用该监视器的RecyclerView
+            * @param dx 向左滑或向右滑
+            * @param dy 向上滑或向下滑
+            */
+           @Override
+           public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+               super.onScrolled(recyclerView, dx, dy);
+               // 大于0表示正在向上滑动，小于等于0表示停止或向下滑动
+               isSlidingUpward = dy > 0;
+           }
+   
+           /**
+            * 加载更多回调，由子类RecyclerView来实现，如向适配器中载入新的数据等
+            */
+           public abstract void onLoadMore();
+       }
+   ```
+
+   加载多项子视图同理，适配器内部维护子项类型，根据getItemViewType(int position)方法可根据数据集中数据的不同返回不同的类型，在onCreateViewHolder中通过返回类型绑定不同的子项布局文件，也就是说一个holder必定绑定一种具体的子项类型并对应数据集中的特定数据子集，数据集中的数据必定是某种类型中的一种，在更新数据时onBindViewHolder有一个position参数，根据holder instanceof那种适配器判断属于那种类型，根据position直接获取数据集中的指定数据。
 
 ####  CardView
 
 **参考： https://developer.android.com/guide/topics/ui/layout/cardview **.
 
-通常配合RecyclerView实现滑动列表
+通常配合RecyclerView实现滑动列表，将CardView视为根视图
 
+组件监听为：cardView.setOnClickListener()
 
+#### 滑动显示ScrollView
+
+ `ScrollView`的直接子View只能有一个。 因此只能绑定一个子布局以实现复杂布局。
+
+ `ScrollView`只支持竖直滑动，水平滑动使用`HorizontalScrollView`。
+
+一般直接将ScrollView直接作为根视图 
+
+### 技巧
+
+#### Fragment双击返回(定义接口，事件回调)
+
+Fragment并不提供返回事件的监听器设置，只有Activity实现了。
+
+同时，有的Fragment需要双击退出，有的Fragment并不需要双击退出，因此通过指定监听器接口来实现，Activty一直监听键盘事件，当处于某个Fragment时，当前Fragment为Activity设置具体的监听器实现，由Activity监控实现即可
+
+**1.定义返回监听接口**
+
+```java
+public interface FragmentBackListener {
+    void onBackForward();
+}
+```
+
+**2.在Activity中引入监听器，提供设置监听器方法，在监听键盘的方法中调用监听器(回调)方法**
+
+```java
+    private FragmentBackListener backListener;//Fragment返回监听拦截
+    public void setBackListener(FragmentBackListener backListener){
+        this.backListener=backListener;
+    }
+```
+
+```java
+    /**
+     * 双击返回键返回，事件已被委托
+     */
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (backListener != null) {
+                backListener.onBackForward();//由监听器实现具体的操作，如果为null则不操作
+                return false;
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+```
+
+**3.在对应的Fragment中设置监听器，需要返回的实现，不需要返回的直接设置为null即可**
+
+```java
+        ((MainActivity)getActivity()).setBackListener(new FragmentBackListener() {
+            //返回键点击间隔时间计算
+            private long exitTime = 0;
+            //捕捉返回键点击动作
+            @Override
+            public void onBackForward() {
+                //和上次点击返回键的时间间隔
+                long intervalTime = System.currentTimeMillis() - exitTime;
+                if (intervalTime > 2000) {
+                    Toast.makeText(getActivity(), "双击退出", Toast.LENGTH_SHORT).show();
+                    exitTime = System.currentTimeMillis();
+                }else {
+                    getActivity().finish();//否则退出
+                }
+            }
+        });
+```
+
+如果不需要，传入null即可
+
+```java
+((MainActivity)getActivity()).setBackListener(null)
+```
 
 ### 注解框架butterknife（黄油刀）
 
@@ -1341,8 +1677,6 @@ SwipeRefreshLayout是一个下拉刷新布局，只能有一个孩子，常与Re
 
 ListView listview;
 ```
-
-
 
 ### 杂记
 

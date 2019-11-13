@@ -128,12 +128,12 @@ name varchar(20) not null,
 sex varchar(2) check(sex='男' or sex='女'),
 visits int(11),
 head_img varchar(100),
-airticle_count int,
-airticle_types text
+article_count int,
+article_types text
 )ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ```
 
-visits为总访问量，head_img为用户头像，在本地存储，数据库里放置引用路径，ariticle_count为文章总数，airticle_types为自定义文章分类，每个分类使用/隔开
+visits为总访问量，head_img为用户头像，在本地存储，数据库里放置引用路径，article_count为文章总数，article_types为自定义文章分类，每个分类使用/隔开
 
 #### 创建表文章Ariticle
 
@@ -152,7 +152,7 @@ foreign key(user_id) references user(id)
 
 ### api 文档
 
-
+/home/register       
 
 
 
@@ -378,7 +378,89 @@ editormd("test-editormd", {
 
 
 
+### 常见需求
 
+#### 直接登录
+
+Cookie信息存储在浏览器中，该浏览器会偷偷把cookie发送给后台，后台根据固定的cookie值获取value，设置cookie时是通过session设置的，也就是说第一次登录时可以根据需要设置cookie（通常是sessionId），如果获取到sessionId，则拿数据返回给用户，否则让用户登录，重新保存sessionID。
+
+现在更多的是基于token，token中的数据放在请求头(Header)中，token在用户第一次登录时由算法生成给用户并带签名，服务器端并不保存，下次登录时携带token，解密后如果数据与签名相同则拿token携带的id返回数据给用户。
+
+ ![img](https://pic1.zhimg.com/v2-26d5210a9c95c3a112372a12555118d4_b.jpg) 
+
+ 其实token就是一段字符串，由三部分组成：Header，Payload，Signature。 
+
+
+
+#### 验证码
+
+使用开源项目  kaptcha ，controller直接将生成的验证码写入session，将对应的图片通过response的输出流直接打印返回
+
+导入：
+
+```xml
+<!-- google 验证码 -->
+<dependency>
+    <groupId>com.github.penggle</groupId>
+    <artifactId>kaptcha</artifactId>
+    <version>${kaptcha.version}</version>
+</dependency>
+```
+
+在DispatcherServlet配置xml的地方加入bean:
+
+```xml
+ <!--goole captcha 验证码配置-->
+    <bean id="captchaProducer" class="com.google.code.kaptcha.impl.DefaultKaptcha">
+        <property name="config">
+            <bean class="com.google.code.kaptcha.util.Config">
+                <constructor-arg>
+                    <props>
+                        <prop key="kaptcha.border">no</prop>
+                        <prop key="kaptcha.textproducer.font.size">45</prop>
+                        <prop key="kaptcha.textproducer.font.color">blue</prop>
+                        <prop key="kaptcha.textproducer.char.length">4</prop>
+                        <prop key="kaptcha.session.key">code</prop>
+                    </props>
+                </constructor-arg>
+            </bean>
+        </property>
+    </bean>
+```
+
+使用：
+
+```java
+    @Autowired
+    private Producer captchaProducer;
+
+@RequestMapping(value = "/checkCode")
+    public String getKaptchaImage(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        response.setDateHeader("Expires", 0);
+        response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        response.addHeader("Cache-Control", "post-check=0, pre-check=0");
+        response.setHeader("Pragma", "no-cache");
+        response.setContentType("image/jpeg");
+
+        String capText = captchaProducer.createText();
+        request.getSession().setAttribute(Constants.KAPTCHA_SESSION_KEY, capText);
+        BufferedImage bi = captchaProducer.createImage(capText);
+        ServletOutputStream out = response.getOutputStream();
+        ImageIO.write(bi, "jpg", out);
+
+        try {
+            out.flush();
+        } finally {
+            out.close();
+        }
+        return null;//直接返回Null，返回response的输出流
+    }
+}
+```
+
+```html
+<img alt="验证码" src="/checkCode">        <!-- KaptchaServlet会过滤该请求，返回验证码图片-->
+```
 
 ### 可能问题
 
@@ -390,3 +472,33 @@ editormd("test-editormd", {
 
 2. 选择"Languages and Frameworks"，选择“JavaScript”
 3. 选择'ECMAScript 6'
+
+#### 显示jsp源码
+
+jsp在服务端执行，很显然tomcat没有做jsp的解析，如果不使用springMVC，那么直接使用tomcat的话应该直接访问jsp资源文件,tomcat容器识别jsp然后解析返回静态html页面
+
+现在使用springMVC，在web.xml中进行了DispatcherServlet的映射
+
+```xml
+    <servlet>
+      <servlet-name>home</servlet-name>
+      <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+      <!--配置初始化加载路径-->
+      <init-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>classpath:spring-mvc/home-servlet.xml</param-value>
+      </init-param>
+      <load-on-startup>1</load-on-startup><!--启动时立即加载Servlet-->
+    </servlet>
+    <!--委托home下的请求，绑定home-servlet，对应的控制器省略home前缀-->
+    <servlet-mapping>
+      <servlet-name>home</servlet-name>
+      <url-pattern>/*</url-pattern>
+    </servlet-mapping>
+```
+
+由DispatcherServlet进行所有url请求的处理，在tomcat中，url-pattern中/*就代表所有映射，包括带后缀（后缀型）的与不带后缀的（路径型），/就代表不带后缀的。前台某个url交给控制器处理后返回一个\*.jsp，如果是/*那么就交给DipatcherServlet处理并返回，然而DipatcherServlet并不能解析jsp，因此当做静态资源返回。如果选择/,那么就不会拦截\*.jsp转而交给tomcat的默认处理器处理，因此能解析jsp，即将/*改为/即可。
+
+#### javax.servlet.ServletException: Servlet.init() for servlet
+
+如果是org.springframework引起的，那么检查pom.xml中的spring依赖，不要重复引入，不要覆盖

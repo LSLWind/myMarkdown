@@ -779,6 +779,23 @@ Servlet 自动刷新页面
 public void setIntHeader(String header, int headerValue)
 如：setIntHeader("Refresh",1)即设置页面每隔一秒自动刷新一次。
 
+#### Servlet请求方式
+
+```
+Servlet容器默认是采用单实例多线程的方式处理多个请求的：
+　　1.当web服务器启动的时候（或客户端发送请求到服务器时），Servlet就被加载并实例化(只存在一个Servlet实例)；
+　　2.容器初始化化Servlet主要就是读取配置文件（例如tomcat,可以通过servlet.xml的<Connector>设置线程池中线程数目，初始化线程池通过web.xml,初始化每个参数值等等。
+　　3.当请求到达时，Servlet容器通过调度线程(Dispatchaer Thread) 调度它管理下线程池中等待执行的线程（Worker Thread）给请求者；
+　　4.线程执行Servlet的service方法；
+　　5.请求结束，放回线程池，等待被调用；
+（注意：避免使用实例变量（成员变量），因为如果存在成员变量，可能发生多线程同时访问该资源时，都来操作它，照成数据的不一致，因此产生线程安全问题）
+从上面可以看出（好处）：
+　　第一：Servlet单实例，减少了产生servlet的开销；
+　　第二：通过线程池来响应多个请求，提高了请求的响应时间；
+　　第三：Servlet容器并不关心到达的Servlet请求访问的是否是同一个Servlet还是另一个Servlet，直接分配给它一个新的线程；　　　　　　如果是同一个Servlet的多个请求，那么Servlet的service方法将在多线程中并发的执行；
+　　第四：每一个请求由ServletRequest对象来接受请求，由ServletResponse对象来响应该请求；
+```
+
 #### JSP概述
 
 **参考： https://zhuanlan.zhihu.com/p/42343690**

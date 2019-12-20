@@ -147,7 +147,7 @@ public class WebConfig {
 
  `@RequestBody` 这个注解的使用，使得REST接口接收的不再content-type为`application/x-www-form-urlencoded`的请求, 反而需要显示指定为`application/json` 
 
-请求方法一般设置为POST，用在Controller方法参数内声明参数
+请求方法一般设置为POST，用在Controller方法参数内声明参数，使用@RequestBody声明参数变量获取json中的数据，json是k-v，@RequestBody注入的属性也是k-v，可以是map，也可以是基于setter的对象
 
  https://juejin.im/post/5b5efff0e51d45198469acea 
 
@@ -341,11 +341,25 @@ public String checkA(Model model, HttpSession session, @SessionAttribute("userId
    }
 ```
 
+#### 返回类型
+
+##### String
+
+返回的是View名称
+
+##### ModelAndView
+
+返回的是ModelAndView中指定的跳转页面
+
+##### Map/Void
+
+返回的页面就是请求的页面
+
 ### JSP中使用Model数据
 
 直接通过${modelAttribute}即可取值，取值优先级为map,mapModel,session
 
-
+ 
 
 
 

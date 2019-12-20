@@ -23,3 +23,31 @@ public class LoadSample {
 11 }  
 ```
 
+### org.apache.commons.lang.StringUtils 字符串常用类
+
+* public static boolean contains(String str,char searchChar)
+*  public static boolean contains(String str,str searchChar) 
+
+搜索字符/字符串是否存在
+
+* public static boolean containsIgnoreCase(String str,String searchStr)
+
+搜索字符串，忽略大小写
+
+* public static boolean isBlank(String str)
+* public static boolean isEmpty(String str)
+
+检查字符是否为“ ” 或者null
+
+* public static String replace(String text,String searchString,String replacement)
+
+ 用一个字符串替换另一个字符串中出现的指定字符串。 
+
+* public static String join(Object[] array,String separator);
+
+ 用指定分隔符连接数组各个元素。 
+
+* public static boolean endsWith(String str, String suffix)
+
+是否以指定字符串结尾
+

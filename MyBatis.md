@@ -57,6 +57,20 @@ public interface BlogMapper {
 }
 ```
 
+#### #与$的区别
+
+1 #是将传入的值当做字符串的形式，eg:select id,name,age from student where id =#{id},当前端把id值1，传入到后台的时候，就相当于 select id,name,age from student where id ='1'.
+
+ 2 $是将传入的数据直接显示生成sql语句，eg:select id,name,age from student where id =${id},当前端把id值1，传入到后台的时候，就相当于 select id,name,age from student where id = 1.
+
+ 3 使用#可以很大程度上防止sql注入。(语句的拼接)
+
+ 4 但是如果使用在order by 中就需要使用 $.
+
+ 5 在大多数情况下还是经常使用#，但在不同情况下必须使用$. 
+
+#与的区别最大在于：#{} 传入值时，sql解析时，参数是带引号的，而的区别最大在于：#{} 传入值时，sql解析时，参数是带引号的，而{}穿入值，sql解析时，参数是不带引号的。
+
 #### 作用域
 
 官网给出的推荐（最佳实践）为：
@@ -126,7 +140,7 @@ SqlSessionFactory 一旦被创建就应该在应用的运行期间一直存在�
 </dataSource>
 ```
 
-##### <settinfgs\>
+##### <settings\>
 
 mybatis的全局配置，不配置则使用默认值
 
@@ -281,6 +295,114 @@ void insertUser(@Param("email") String email,@Param("password") String password,
 ```
 
 2. 主键自增，绑定数据库只需开启useGeneratedKeys="true"  keyColumn="id"，keyColumn表示数据库中的自增主键列，如果绑定对应DAO的主键，必须指定参数类型 parameterType 为哪一个DAO，并使用keyProperty制定该DAO的主键字段，否则仍会发生绑定错误
+
+##### <resultMap\>
+
+表示映射器返回的字段的映射，指定column与property
+
+### 返回类型
+
+#### select返回类型
+
+默认就是List，resultType=对象，返回的就是list，只有一个则是对象
+
+#### insert返回类型
+
+插入单个数据返回成功插入数据的条数，成功为1，失败直接返回sql的异常
+
+#### delete返回类型
+
+删除一个不存在的值返回0
+
+正常删除返回1
+
+删除存在外键约束的报异常
+
+### 注解配置
+
+常与SpringBoot配合使用
+
+#### @Mapper
+
+@Mapper，用于接口上，表示这是一个接口映射器
+
+#### @Select
+
+查询语句
+
+#### @Results/@Result
+
+表示resultMap，表与bean的字段映射，内部一般为@Result，与其配合使用
+
+```java
+    //根据院系id获取专业列表
+    @Select("select * from major where department_id=#{department_id}")
+    @Results({
+            @Result(column = "id", property = "id"),
+            @Result(column = "name", property = "name"),
+            @Result(column = "department_id",property = "departmentId")
+    }
+    )
+    List<Major> getMajorListByDepartmentId(int departmentId);
+```
+
+#### @ResultMap
+
+可引用@Results的结果避免重复映射：
+
+```java
+.......省略一万行sql
+@Results(id = "accResultMap",value = {
+            @Result(property = "accId",column = "acc_id"),
+            @Result(property = "accRole",column = "acc_login"),
+            @Result(property = "accName",column = "acc_name"),
+            @Result(property = "accPwd",column = "acc_pass"),
+    })
+Account queryAccById(Integer accid);
+ 
+.......省略一万行sql
+@ResultMap("accResultMap")
+Account queryByName();
+
+
+@Result是@Results的儿子。@Results可以算作是@ResultMap的干儿子！
+```
+
+#### @Options 
+
+配置可选项，与其他SQL注解语句混用，如获取自增主键，源码为：
+
+```java
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD})
+public @interface Options {
+    boolean useCache() default true;
+
+    boolean flushCache() default false;
+
+    ResultSetType resultSetType() default ResultSetType.FORWARD_ONLY;
+
+    StatementType statementType() default StatementType.PREPARED;
+
+    int fetchSize() default -1;
+
+    int timeout() default -1;
+
+    boolean useGeneratedKeys() default false;
+
+    String keyProperty() default "id";
+
+    String keyColumn() default "";
+}
+```
+##### 插入数据后获取自增主键值
+
+```java
+@Insert("INSERT INTO `wx_act` (`name`, `modelId`, `image`) VALUES (#{name}, #{modelId}, #{image})")
+@Options(useGeneratedKeys = true, keyProperty = "id", keyColumn = "id")
+int saveMoonCoke(MidAutumn midAutumn);
+```
+配置选项useGeneratedKeys，keyProperty，keyColumn即可
 
 #### 常见错误
 

@@ -73,6 +73,7 @@ public @interface 注解名称{
 
 public @interface Lsl {
     int getAge();
+
 }
 使用时就可以直接这样写@Lsl(getAge = 18)，直接就对getAge进行赋值，因此getAge()看起来又是一个属性。
 内部声明属性时可以设置默认值，如int getAge() default 18;

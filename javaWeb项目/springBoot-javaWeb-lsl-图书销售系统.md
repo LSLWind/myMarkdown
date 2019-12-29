@@ -193,12 +193,13 @@ create table comment(
 
 ```mysql
 create table message(
-	id long auto_increment,
+	id bigint auto_increment,
 	customer_id int not null,
-    
 	shop_id int not null,
-	message_date date not null,
-	content charchar(255) not null,
+	date datetime not null,
+	content varchar(255) not null,
+    state tinyint comment "状态标志，为1时表示是未读消息"
+    is_to_shop tinyint comment"1表示是客户向商店发送消息，0表示是商店向客户发送消息"
 	primary key(id),
 	foreign key(customer_id) references customer(id),
 	foreign key(shop_id) references shop(id)
@@ -245,7 +246,7 @@ create table message(
 
 /customer/loginPage  请求跳转到登录界面
 
-/customer/login  aja请求登录验证，返回响应json，成功设置token
+/customer/login  ajax请求登录验证，返回响应json，成功设置token
 
 /customer/{customerId}  参数customerId没有用，只不过用来区别表示，实际信息从token中取出来，进入用户个人中心
 

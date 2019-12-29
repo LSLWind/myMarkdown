@@ -1,8 +1,6 @@
- https://www.zhihu.com/question/23277575/answer/169698662 
-
 ## IOC/DI
 
-一种仅通过构造器参数、工厂方法参数或由构造器/工厂方法产生的实例的属性定义依赖关系，由容器在创造bean的过程中注入依赖的过程。
+一种仅通过构造器参数、工厂方法参数或由构造器/工厂方法产生的实例的属性定义依赖关系，由容器在创造bean的过程中注入依赖的过程。下述例子来源： https://www.zhihu.com/question/23277575/answer/169698662 
 
  **所谓依赖注入，就是把底层类作为参数传入上层类，实现上层类对下层类的“控制**” 
 
@@ -50,7 +48,7 @@ IOC容器通过配置元数据读取要管理的bean信息，由元数据决定�
 
 使用标签<bean/\>与<beans\>定义bean
 
-使用：
+使用IOC容器：
 
 ```java
 // 创建IOC
@@ -61,7 +59,7 @@ PetStoreService service = context.getBean("petStore", PetStoreService.class);
 List<String> userList = service.getUsernameList();
 ```
 
-##### **使用静态工厂**
+##### **使用静态工厂生成bean**
 
 ```java
 public class DefaultServiceLocator {
@@ -96,7 +94,7 @@ public class DefaultServiceLocator {
     factory-method="createAccountServiceInstance"/>
 ```
 
-##### 基于构造器
+##### 基于构造器生成bean
 
 默认按照构造器中参数的顺序依次为bean注入属性，参数中的bean由ref指示，按照顺序注入依赖，使用标签< constructor-arg \>配置
 
@@ -206,9 +204,7 @@ public class ExampleBean {
 </beans>
 ```
 
-
-
-##### 基于setter
+##### 基于setter注入依赖
 
 通过setter方法注入依赖，使用标签<property\>
 
@@ -500,11 +496,12 @@ public class CacheManager{
 
 使用@Autowired不推荐注解静态字段，因为加载机制的问题，扫描时不会注入，因此运行时有空指针异常，@Autowired可用在构造器与方法上，扫描时可通过方法或构造器注入
 
+```java
 @Component
 public class TestClass {
 
     private static AutowiredTypeComponent component;
-    
+    //静态字段的注入
     @Autowired
     public TestClass(AutowiredTypeComponent component) {
         TestClass.component = component;
@@ -516,6 +513,7 @@ public class TestClass {
     }
 
 }
+```
 
 #### @Qualifier 
 
@@ -652,6 +650,63 @@ public class BTest {
         System.out.println(a.toString());
     }
 
+}
+```
+
+#### @Value
+
+@Value的作用是通过注解将常量、配置文件中的值、其他bean的属性值注入到变量中，作为变量的初始值。
+
+**常量注入**
+
+```java
+@Value("normal")
+private String normal; // 注入普通字符串
+
+@Value("classpath:com/hry/spring/configinject/config.txt")
+private Resource resourceFile; // 注入文件资源
+
+@Value("http://www.baidu.com")
+private Resource testUrl; // 注入URL资源
+```
+
+**bean属性、系统属性、表达式注入@Value(#{}")**
+
+bean属性注入需要注入者和被注入者属于同一个IOC容器，或者父子IOC容器关系，在同一个作用域内。
+
+ ```java
+@Value("#{beanInject.another}")
+private String fromAnotherBean; // 注入其他Bean属性：注入beanInject对象的属性another
+
+@Value("#{systemProperties['os.name']}")
+private String systemPropertiesName; // 注入系统属性
+
+@Value("#{ T(java.lang.Math).random() * 100.0 }")
+private double randomNumber; //注入表达式结果
+ ```
+
+**配置文件属性注入@Value("${}")**
+
+@Value("#{}")读取配置文件中的值，注入到变量中去。配置文件分为默认配置文件application.properties和自定义配置文件
+
+* application.properties：application.properties在spring boot启动时默认加载此文件
+
+* 自定义属性文件：自定义属性文件通过@PropertySource加载。@PropertySource可以同时加载多个文件，也可以加载单个文件。如果相同第一个属性文件和第二属性文件存在相同key，则最后一个属性文件里的key起作用。加载文件的路径也可以配置变量，如下文的${anotherfile.configinject}，此值定义在第一个属性文件config.properties
+
+```java
+@Component
+// 引入自定义配置文件。
+@PropertySource({"classpath:com/hry/spring/configinject/config.properties",
+  "classpath:com/hry/spring/configinject/config_**${anotherfile.configinject}**.properties"})
+public class ConfigurationFileInject{
+  @Value("${app.name}")//缺省的配置文件路径就是src/main/application.properties
+  private String appName; //这里的值来自application.properties，spring boot启动时默认加载此文件
+    
+  @Value("${book.name}")
+  private String bookName;//上述已声明配置文件，所以会查找声明的配置文件的属性
+
+  @Value("${book.name.placeholder}")
+  private String bookNamePlaceholder;
 }
 ```
 

@@ -404,6 +404,85 @@ int saveMoonCoke(MidAutumn midAutumn);
 ```
 配置选项useGeneratedKeys，keyProperty，keyColumn即可
 
+#### like模糊查询
+
+1.表达式: name like"%"#{name}"%"
+
+==> Preparing: select * from bbs_brand WHERE namelike"%"?"%"and falg=? limit 0 , 10
+
+==>Parameters: 莲(String), 1(Integer)
+
+能够查询出来,没有问题,这是使用了占位符来占位,写成SQL就是: name like "%"'莲'"%"没有问题
+
+ 
+
+2.表达式: name like '%${name}%'
+
+Preparing:select count(0) from (select * from bbs_brand WHERE name like'%莲%' and falg=?) as total
+
+Parameters: 1(Integer)
+
+使用$进行字符串的拼接,直接把传入的值,拼接上去了,没有任何问题
+
+ 
+
+\3. 表达式: name likeconcat(concat('%',#{username}),'%')
+
+==> Preparing: select count(0) from (select *from bbs_brand WHERE name like
+
+ concat(concat('%',?),'%') and falg=?) as total
+
+==>Parameters: 莲(String), 1(Integer)
+
+这是使用了cancat进行字符串的连接,同时使用了#进行占位
+
+转换成SQL就是: name like CONCAT(CONCAT('%','莲'),'%')
+
+ 
+
+\3. 表达式:name like CONCAT('%','${name}','%')
+
+==> Preparing: select count(0) from (select *from bbs_brand WHERE name likeCONCAT('%','莲','%') and falg=?) astotal
+
+==>Parameters: 1(Integer)
+
+对上面的表达式进行了简化,更方便了
+
+#### #{}与${}的区别
+
+、使用${}方式传入的参数，mybatis不会对它进行特殊处理，而使用#{}传进来的参数，mybatis默认会将其当成字符串。可能在赋值给如id=#{id}和id=${id}看不出多大区别，但是作为表名或字段参数时可以明显看出，可以看看下面的例子：
+假设传入的参数为表名test
+selec * from #{table};
+
+解析后是：
+select * from "test";
+
+而
+select * from ${table};
+解析后是：
+select * from test;
+
+很明显，前者多了字符串的引号，会失败，后者正常查询会成功；
+所以对于传入分组(order)字段或者排序字段(order)，应使用${},避免出现order  by "id" 等情况。
+
+2、#和$在预编译处理中是不一样的。#类似jdbc中的PreparedStatement，对于传入的参数，在预处理阶段会使用?代替，比如：
+select * from student where id = ?;
+
+待真正查询的时候即在数据库管理系统中（DBMS）才会代入参数。
+而${}则是简单的替换，如下：
+select * from student where id = 2;
+
+总结
+1、能使用#{}的地方应尽量使用#{}
+2、像PreparedStatement ，#{}可以有效防止sql注入，${}则可能导致sql注入成功。
+所谓sql注入，就是指把用户输入的数据拼接到sql语句后面作为sql语句的一部分执行，例如：
+select * from user where name=' "+name+" ' and password=' "+password+" '
+
+
+
+那么只要用户输入用户名admin和密码123456' or  'abc' = 'abc',那么拼接出来的语句就为
+select * from user where name=' admin ' and password='123456' or 'abc'= 'abc';
+
 #### 常见错误
 
 ##### invalid bound statement (not found)

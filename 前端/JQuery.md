@@ -88,9 +88,43 @@ $(document).ready(function(){
 
 #### 加载页面时自动调用js
 
-.最简单的调用方式，直接写到html的body标签里面：
+最简单的调用方式，直接写到html的body标签里面：
 
 ```html
 <html> <body onload="func1();func2();func3();"> </body> </html>
+```
+
+#### 清空input(其它标签)中的内容
+
+直接调用val方法设置其默认值为""
+
+```js
+$("#message").val("");//清空input中的内容
+```
+
+#### 向div（其它标签）动态变更/追加内容
+
+可以使用直接DOM文档的这种方式
+
+```js
+doucment.getElementById("").innerHtml+=xxx;
+```
+
+也可以使用方法html()进行变更：
+
+```js
+$("#history").html("xxx");
+```
+
+#### 监听键盘事件
+
+通过函数keydown()进行监听
+
+```js
+$("body").keydown(function() {
+             if (event.keyCode == "13") {//keyCode=13是回车键
+                 $('#btnSumit').click();
+             }
+         });
 ```
 

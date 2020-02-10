@@ -79,3 +79,68 @@ WebSocket之前，为了实现推送技术，所用的技术都是 Ajax  轮询�
 @ServerEndpoint() 声明在一个类上，表明是一个WebSocket服务器，括号内需定义一个该websocket服务器端url地址
 
  @ServerEndpoint 是一个类层次的注解，它的功能主要是将目前的类定义成一个websocket服务器端,注解的值将被用于监听用户连接的终端访问URL地址,客户端可以通过这个URL来连接到WebSocket服务器端
+
+#### SpringBoot使用WebSocket前端出现404
+
+一个比较大的坑，javaEE对WebSocket进行了实现，使用SpringBoot整合WebSocket时要注意一下进行配置
+
+首先创建websocket的config类，注入ServerEndpointExporter（使用外置tomcat就无需注入）。注册了这个类之后就会对@ServerEndpoint声明类进行注入，成websocket服务类，进行监听。
+
+（MySpringConfigurator类是为了使WebSocketServer类能够注入其他bean（如图中RedisService的bean），因为websocket注册的bean默认是自己管理，没有托管给spring，所以，此类是为了将websocket的bean托管给spring容器。）
+
+@Configuration
+@ConditionalOnWebApplication
+public class WebSocketConfig  {
+
+    //使用boot内置tomcat时需要注入此bean
+    @Bean
+    public ServerEndpointExporter serverEndpointExporter() {
+        return new ServerEndpointExporter();
+    }
+
+ 
+
+    @Bean
+    public MySpringConfigurator mySpringConfigurator() {
+        return new MySpringConfigurator();
+    }
+}
+/**
+ *  以websocketConfig.java注册的bean是由自己管理的，需要使用配置托管给spring管理
+ */
+public class MySpringConfigurator extends ServerEndpointConfig.Configurator implements ApplicationContextAware {
+
+    private static volatile BeanFactory context;
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        MySpringConfigurator.context = applicationContext;
+    }
+
+    @Override
+    public <T> T getEndpointInstance(Class<T> clazz) throws InstantiationException {
+        return context.getBean(clazz);
+    }
+}
+创建websocketServer类（太长了，忽略@onopen等方法）
+
+/*
+    websocket所需注解,设置监听路径等，此注解会为每一个连接请求创建一个point实例对象，
+    此注解会将编解码成一个websocket服务，url是发布路径。
+ */
+@Component
+@ServerEndpoint(value = "/webSocket/{sid}", configurator = MySpringConfigurator.class)
+public class WebSocketServer {
+
+     @Autowired
+     private RedisService redisService;
+     
+     private Session session;//每个客户端锁相对应的session，服务端根据session和客户端进行数据交互
+    private String sid = "";
+    private static CopyOnWriteArraySet<WebSocketServer> copyOnWriteArraySet
+            = new CopyOnWriteArraySet<WebSocketServer>();//存储每个客户端连接
+    
+    ....实现@onopen等方法...
+
+}
+前端页面网上很多，这里不放了。

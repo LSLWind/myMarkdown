@@ -94,31 +94,53 @@ Spring Cloud 已经把 Eureka 集成在其子项目 Spring Cloud Netflix 里面
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.2.2.RELEASE</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>lsl.study</groupId>
+    <artifactId>springcloud</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>springcloud</name>
+    <description>Demo project for Spring Cloud</description>
 
-    <groupId>lsl</groupId>
-    <artifactId>maven-modulesProject</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <modules>
-        <module>childMavenProject</module>
-    </modules>
+    <properties>
+        <java.version>1.8</java.version>
+    </properties>
 
-    <!--包为pom，即父子聚合项目-->
+    <!--multi modules多模块项目-->
     <packaging>pom</packaging>
+    <modules>
+        <module>eureka</module>
+        <module>eurekaclient</module>
+    </modules>
 
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>cn.hutool</groupId>
-            <artifactId>hutool-all</artifactId>
-            <version>4.3.1</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 
@@ -127,12 +149,21 @@ Spring Cloud 已经把 Eureka 集成在其子项目 Spring Cloud Netflix 里面
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
+                <version>Finchley.SR4</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
 ```
@@ -141,11 +172,11 @@ Spring Cloud 已经把 Eureka 集成在其子项目 Spring Cloud Netflix 里面
 
 ```xml
     <dependencies>
-        <dependency>
+        <dependency><!--客户端依赖-->
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
-        <dependency>
+        <dependency><!--服务端依赖-->
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
         </dependency>
@@ -218,7 +249,7 @@ eureka.server.eviction-interval-timer-in-ms=10000
 
 使用上面的配置启动项目，访问http://localhost:1111/即可进入页面
 
- ![img](https://img2018.cnblogs.com/blog/398358/201907/398358-20190722112013106-1317411812.png) 
+[![loRME4.md.png](https://s2.ax1x.com/2020/01/12/loRME4.md.png)](https://imgchr.com/i/loRME4)
 
  看Instances currently registered with Eureka， 可以发现信息是：No instances available。
 这表示 暂时还没有微服务注册进来。 
@@ -238,13 +269,44 @@ eureka.server.eviction-interval-timer-in-ms=10000
 
 需要注意的是，这是一个实际的SpringBoot微服务，是解耦中的服务的一部分，要实现什么功能是根据需求来的，同时微服务是可以横向扩展的。
 
+在这里使用SpringBoot创建一个普通的Web项目，生成的pom为：
+
+```xml
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+```
+
 #### client配置
 
 配置文件是关键部分，只有指明具体的配置信息才能构成整个微服务应用，示例为：
 
 ```properties
 ##eureka服务注册路径
-eureka.client.serviceUrl.defaultZone=http://localhost:8081/eureka/
+eureka.client.serviceUrl.defaultZone=http://localhost:1111/eureka/
 ##实例id，也就是在注册中心页面显示的微服务名
 eureka.instance.instance-id=${spring.application.name}:${server.port}
 # 设置微服务调用地址为IP优先（缺省为false）
@@ -260,4 +322,111 @@ Eureka 首页显示的微服务名默认为：`机器主机名:应用名称:应�
 eureka.client.serviceUrl.defaultZone这个配置可以配置单个注册中心的地址，也可配置多个,逗号隔开，如：
 
 eureka.client.serviceUrl.defaultZone=http://127.0.0.1:8000/eureka/,http://127.0.0.1:8081/eureka/
+
+客户端就是通过访问该url向注册中心注册自己（与Eureka Server中的配置部分互相对应）
+
+#### 简单client测试
+
+主应用要使用注解@EnableEurekaClient
+
+```java
+@EnableEurekaClient
+@SpringBootApplication
+public class EurekaclientApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(EurekaclientApplication.class, args);
+    }
+
+}
+```
+
+随便编写一个Controller
+
+```java
+@Controller
+public class HelloEurekaController {
+
+    @GetMapping("/hello")
+    public String HelloEurekaPage(Model model){
+        model.addAttribute("hello","eureka");
+        return "hello";
+    }
+}
+```
+
+前端页面：
+
+```html
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" >
+<head>
+    <meta charset="UTF-8">
+    <title>EurekaClient测试</title>
+</head>
+<body>
+<h5 th:text="${hello}"></h5>
+</body>
+</html>
+```
+
+此时便可进行访问，先看一下EurekaServer的注册中心（127.0.0.1:1111)
+
+[<img src="https://s2.ax1x.com/2020/01/12/loqcM4.md.png" alt="loqcM4.md.png"  />](https://imgchr.com/i/loqcM4)
+
+可以看到实例已经进行了注册
+
+因为注册中心以续约以及续期的方式根据Client的信息进行存储，因此在一段时间内注册中心的内容是不会变的，先更改一下application.properties
+
+```properties
+spring.application.name=eureka-client
+server.port=8080
+##eureka服务注册路径
+eureka.client.serviceUrl.defaultZone=http://localhost:1111/eureka/
+##实例id，也就是在注册中心页面显示的微服务名
+eureka.instance.instance-id=${spring.application.name}:${server.port}
+# 设置微服务调用地址为IP优先（缺省为false）
+eureka.instance.prefer-ip-address=true
+# 心跳时间，即服务续约间隔时间（缺省为30s）
+eureka.instance.lease-renewal-interval-in-seconds=30
+# 发呆时间，即服务续约到期时间（缺省为90s）
+eureka.instance.lease-expiration-duration-in-seconds=90
+```
+
+此时立即重启，刷新127.0.0.1:1111
+
+[![loOpA1.md.png](https://s2.ax1x.com/2020/01/12/loOpA1.md.png)](https://imgchr.com/i/loOpA1)
+
+可以看到有两个实例，另一个最开始的UNKNOWN的实例其实已经挂掉了
+
+#### Eureka自我保护机制
+
+上图中出现了警告信息[EMERGENCY! EUREKA MAY BE INCORRECTLY CLAIMING INSTANCES ARE UP WHEN THEY'RE NOT. RENEWALS ARE LESSER THAN THRESHOLD AND HENCE THE INSTANCES ARE NOT BEING EXPIRED JUST TO BE SAFE.]
+
+ **警告！Eureka可能存在维护了错误的实例列表（当它们没有启动的时候，Eureka却把它当成启动的了）；Renews值小于Threshold值，因此剩下未过期的都是安全的。** 
+
+这是Eureka的一种设计思想，Eureka Server在运行期间，会统计心跳失败的比例在15分钟之内是否低于85%，如果出现低于的情况（在单机调试的时候很容易满足，实际在生产环境上通常是由于网络不稳定导致），Eureka Server会将当前的实例注册信息保护起来，同时提示这个警告。
+
+Eureka server和client之间每隔30秒会进行一次心跳通信，告诉server，client还活着。由此引出两个名词： 
+
+* Renews threshold：server期望在每分钟中收到的心跳次数 
+* Renews (last min)：上一分钟内收到的心跳次数。
+
+前文说到禁止注册server自己为client，不管server是否禁止，阈值（threshold）是1。client个数为n，阈值为1+2*n（此为一个server且禁止自注册的情况） 
+如果是多个server，且开启了自注册，那么就和client一样，对于其他的server来说就是client，是要\*2的
+
+ Eurake有一个配置参数**eureka.server.renewalPercentThreshold**，定义了renews 和renews threshold的比值，默认值为0.85。当server在15分钟内，比值低于percent，即少了15%的微服务心跳，server会进入自我保护状态，Self-Preservation。在此状态下，server不会删除注册信息，这就有可能导致在调用微服务时，实际上服务并不存在。 
+这种保护状态实际上是考虑了client和server之间的心跳是因为网络问题，而非服务本身问题，不能简单的删除注册信息 
+
+### 高可用注册中心
+
+Eureka Server的高可用实际上就是将自己作为服务向其他服务注册中心注册自己，形成一组互相注册的服务注册中心以实现服务的互相同步，此时形成注册中心集群，当服务向注册中心注册时，Client可以使用逗号隔开多个注册中心url,如 eureka.client.serviceUrl.defaultZone=http://127.0.0.1:8000/eureka/,http://127.0.0.1:8081/eureka/
+
+
+
+
+
+### 参考
+
+**https://www.cnblogs.com/gudi/p/8645370.html **
 

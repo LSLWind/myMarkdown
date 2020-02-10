@@ -1,6 +1,6 @@
 ## IOC/DI
 
-一种仅通过构造器参数、工厂方法参数或由构造器/工厂方法产生的实例的属性定义依赖关系，由容器在创造bean的过程中注入依赖的过程。下述例子来源： https://www.zhihu.com/question/23277575/answer/169698662 
+一种仅通过构造器参数、工厂方法参数或由构造器/工厂方法产生的实例的属性定义依赖关系，由容器在创造bean的过程中注入依赖的过程。
 
  **所谓依赖注入，就是把底层类作为参数传入上层类，实现上层类对下层类的“控制**” 
 
@@ -14,29 +14,23 @@
 
  ![img](https://pic2.zhimg.com/80/v2-5ca61395f37cef73c7bbe7808f9ea219_hd.png) 
 
-`org.springframework.beans` and `org.springframework.context`  是IoC容器的基础，
+***(来源： https://www.zhihu.com/question/23277575/answer/169698662)***
 
- [`BeanFactory`](https://docs.spring.io/spring-framework/docs/5.2.0.RELEASE/javadoc-api/org/springframework/beans/factory/BeanFactory.html) 接口提供管理object的配置机制，  [`ApplicationContext`](https://docs.spring.io/spring-framework/docs/5.2.0.RELEASE/javadoc-api/org/springframework/context/ApplicationContext.html) 是其子类，提供更多特性。换句话说，BeanFactory提供基本功能与配置框架，ApplocationContext是其超集。
+接口`BeanFactory`提供管理object的配置机制， `ApplicationContext`]是其子接口，提供更多特性。BeanFactory提供基本功能与配置框架，ApplocationContext提供更多企业级功能。
 
 ### 功能
 
-实现了解耦，解决了bean的依赖问题
-
-由ioc容器动态注入对象的依赖，管理bean生命周期，而不手动创建依赖对象并管理。
-
- ![img](https://pic4.zhimg.com/80/v2-dc8c6fc99a74e95cf6ff8066f421596f_hd.jpg) 
+实现了解耦，解决了类之间的依赖问题，由ioc容器动态注入对象的依赖，管理bean生命周期，而不用手动创建依赖对象并管理。 
 
 ### IOC容器
 
-  `org.springframework.context.ApplicationContext` 象征着IOC容器，负责beans的实例化，配置与管理。容器通过读取配置元数据(configuration metadata)获取bean的构造信息，配置元数据可以是XML，注解或者java代码。
+接口`org.springframework.context.ApplicationContext` （应用上下文）象征着IOC容器，负责beans的实例化，配置与管理。容器通过读取配置元数据(configuration metadata)获取bean的构造信息，配置元数据可以是XML，注解或者java代码。
 
  ![container magic](https://docs.spring.io/spring/docs/current/spring-framework-reference/images/container-magic.png) 
 
 
 
- [`ClassPathXmlApplicationContext`](https://docs.spring.io/spring-framework/docs/5.2.0.RELEASE/javadoc-api/org/springframework/context/support/ClassPathXmlApplicationContext.html) or [`FileSystemXmlApplicationContext`](https://docs.spring.io/spring-framework/docs/5.2.0.RELEASE/javadoc-api/org/springframework/context/support/FileSystemXmlApplicationContext.html) 是Spring提供的两个Application实例
-
-即使用方式为：在resources下配置数据源xml文件→使用时读取配置文件，获取IOC容器，通过IOC容器与反射机制根据配置文件注入依赖并获取bean
+`ClassPathXmlApplicationContext` 类与 `FileSystemXmlApplicationContext`是Spring提供的两个ApplicationContext的具体实现，可以通过读取xml获取元数据，为指定对象注入依赖（改配置文件而不改代码），使用方式为：在resources下配置数据源xml文件→使用时读取配置文件，获取IOC容器，通过IOC容器与反射机制根据配置文件注入依赖并获取想要的实例对象
 
 #### 配置bean
 

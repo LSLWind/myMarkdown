@@ -87,10 +87,52 @@ Throwable有两个子类：
 
 * NullPointerException：耳熟能详的空指针异常
 * NumberFormatException：数字格式错误异常，最经典的除于0时就会出现
-* 
 * IndexOutOfBoundsException：索引越界的异常，想要访问不该访问的内存，刷题的时候经常出现
 * IllegalStateException：非法状态异常，官方文档给出的说法是 在非法或不适当的时间调用方法时产生的信号。换句话说，即 Java 环境或 Java 应用程序没有处于请求操作所要求的适当状态下。也即当前请求非法。 
 * ClassCastException：非法强制类型转换
+
+异常中最关键的处理方法都定义在Throwable中，自定义异常一般也仅仅是在super()的基础上增加某些信息，来看一下RuntimeException的源码：
+
+```java
+public class RuntimeException extends Exception {
+    static final long serialVersionUID = -7034897190745766939L;
+    public RuntimeException() {
+        super();
+    }
+    public RuntimeException(String message) {
+        super(message);
+    }
+    public RuntimeException(String message, Throwable cause) {
+        super(message, cause);
+    }
+    public RuntimeException(Throwable cause) {
+        super(cause);
+    }
+    protected RuntimeException(String message, Throwable cause,
+                               boolean enableSuppression,
+                               boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
+}
+```
+
+RuntimeException总共也就这么点代码，同级的IOException也一样，子类也几乎差不多，看一下NullPointerException的源码：
+
+```java
+public class NullPointerException extends RuntimeException {
+    private static final long serialVersionUID = 5162710183389028792L;
+
+    public NullPointerException() {
+        super();
+    }
+
+    public NullPointerException(String s) {
+        super(s);
+    }
+}
+```
+
+自定义异常一般也同样，仅仅是为了标识或者增加业务逻辑异常信息而丰富自己的异常体系，使整个系统更加健壮，重点在于异常的使用--什么时候抛出异常，捕获异常，对于不同的异常该怎么处理，这都是根具体的业务逻辑相关了。
 
 #### 异常处理
 

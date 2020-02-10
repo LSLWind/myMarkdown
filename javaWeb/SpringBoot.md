@@ -567,7 +567,7 @@ Spring Boot 默认把日志输入到console，如果我们要把日志输入到�
 logging.level.org.springframework.security= DEBUG
 logging.level.org.hibernate= DEBUG
 
-logging.file = mylogfile.log 
+logging.file = mylogfile.log ##新版本属性已经改变，使用loging.file.xxx属性
 ```
 
 在这种情况下mylogfile.log将在根目录中创建。我们也可以为为mylogfile.log分配一个路径，如concretepage/mylogfile.log。这种情况下我们将在相对根目录下创建concretepage/mylogfile.log。也可以为日志文件配置绝对路径
@@ -999,6 +999,10 @@ nohup 意思是不挂断运行命令,当账户退出或终端关闭时,程序仍
 当用 nohup 命令执行作业时，缺省情况下该作业的所有输出被重定向到nohup.out的文件中，除非另外指定了输出文件。
 
 方式四
+
+ grant  ALL PRIVILEGES ON  *.*  to root@127.0.0.1 indentified by "123456"; 
+
+nohup java -jar web-0.0.1-SNAPSHOT.jar >web.txt  &  
 
 ```
 nohup java -jar shareniu.jar >/dev/null  &  

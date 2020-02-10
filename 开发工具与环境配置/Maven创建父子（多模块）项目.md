@@ -46,7 +46,9 @@
 </project>
 ```
 
-#### 2.创建子项目maven module![创建子项目](https://stepimagewm.how2j.cn/9294.png) 
+#### 2.创建子项目maven module
+
+#### ![创建子项目](https://stepimagewm.how2j.cn/9294.png) 
 
 子项目就是实际要写代码的项目，创建Maven项目时可使用快速原型 org.apache.maven.archetypes:maven-archetype-quickstart 进行创建，也可以手动更改父子项目的pom.xml设置项目间的父子依赖关系
 

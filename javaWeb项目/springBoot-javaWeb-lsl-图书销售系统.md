@@ -246,7 +246,11 @@ create table message(
 
 /customer/loginPage  请求跳转到登录界面
 
+/customer/registerPage  请求访问注册页面
+
 /customer/login  ajax请求登录验证，返回响应json，成功设置token
+
+/customer/register/lsl ajax请求注册，返回响应json
 
 /customer/{customerId}  参数customerId没有用，只不过用来区别表示，实际信息从token中取出来，进入用户个人中心
 
@@ -257,6 +261,10 @@ create table message(
 /customer/comment/add/{customerId} Ajax请求提交评论信息
 
 /customer/order/stateUpdate/{orderId}  Ajax更新订单状态信息，确认订单已完成
+
+
+
+/book/search/{key}  根据关键字搜索图书信息
 
 
 
@@ -280,6 +288,14 @@ create table message(
 
 
 
+/chat/{customerId}  进入用户消息中心页面
+
+/chat/{customerId}/{shopId} 进入指定用户与商店的通信（发送消息）页面
+
+
+
+
+
 /shop/login  Ajax用户请求登录
 
 /shop/depository/{shopId}/{depositoryName}  进入具体仓库
@@ -287,6 +303,12 @@ create table message(
 /shop/editCount/{shopId}/{depositoryName}/{depositoryId}  进入仓库库存数据编辑页面
 
 /shop/depositoryUpdate/{depositoryId}  Ajax请求更新仓库数据
+
+
+
+/shop/chat/message 进入商店消息管理页面
+
+/shop/chat/{shopId}/{customerId}  商店点击进入具体的与某个用户的聊天界面
 
 
 

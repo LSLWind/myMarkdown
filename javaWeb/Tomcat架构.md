@@ -1,3 +1,15 @@
+## Servlet容器
+
+一个 servlet 容器要为一个 servlet 的请求提供服 务，基本上有三件事要做:  
+
+* 创建一个request 对象并填充那些有可能被所引用的 servlet 使用的信息，如参数、头 部、cookies、查询字符串、URI 等等。一个 request 对象是 javax.servlet.ServletRequest或该接口的一个实例。 
+* 创建一个response 对象，所引用的 servlet 使用它来给客户端发送响应。一个 response对象为javax.servlet.ServletResponse 或该接口的一个实例。
+* 调用 servlet 的 service 方法，并传入 request 和 response 对象。在这里 servlet 会从request对象取值，给 response 写值
+
+的一个实例。 调用 servlet 的 service 方法，并传入 request 和 response 对象。在这里 servlet 会 
+
+
+
 ### 架构
 
  ![img](https://pic2.zhimg.com/v2-1b87e3d9b3b86490febe3a6f91c852b1_b.jpg) 

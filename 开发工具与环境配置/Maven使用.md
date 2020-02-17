@@ -1,3 +1,21 @@
+## Maven常用命令
+
+1. mvn compile 编译源代码
+2. mvn test-compile 编译测试代码
+3. mvn test 运行测试
+4. mvn package 打包，根据pom.xml打成war或jar
+
+> 如果pom.xml中设置 war，则此命令相当于mvn war:war
+>  如果pom.xml中设置 jar，则此命令相当于mvn jar:jar
+
+1. mvn -Dtest package 打包但不测试。完整命令为：mvn -D maven.test.skip=true package
+2. mvn install 在本地Repository中安装jar
+3. mvn clean 清除产生的项目
+4. mvn eclipse:eclipse 生成eclipse项目
+5. mvn idea:idea 生成idea项目
+6. mvn eclipse:clean 清除eclipse的一些系统设置
+7. mvn dependency:sources 下载源码
+
 #### depencyManagement
 
 用于进行依赖版本管理，在我们项目顶层的POM文件中，我们会看到dependencyManagement元素。通过它来管理jar包的版本，让子项目中引用一个依赖而不用显示的列出版本号。Maven会沿着父子层次向上走，直到找到一个拥有dependencyManagement元素的项目，然后它就会使用在这个dependencyManagement元素中指定的版本号。

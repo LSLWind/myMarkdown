@@ -8,7 +8,7 @@
 
 Arrays.copyOf(数组，长度)
 
-Arrays.copyOf(数组，开始index，结束index)
+Arrays.copyOfRange(数组，开始index，结束index)，[from,to)
 
 返回对应数组][]
 

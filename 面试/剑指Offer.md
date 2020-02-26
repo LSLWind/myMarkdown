@@ -504,6 +504,553 @@ class Solution {
 }
 ```
 
+### 32-1从上到下打印二叉树
 
+从上到下打印出二叉树的每个节点，同一层的节点按照从左到右的顺序打印。
 
+```
+例如:给定二叉树: `[3,9,20,null,null,15,7]`,
+    3
+   / \
+  9  20
+    /  \
+   15   7
+返回：
+[3,9,20,15,7]
+```
+
+基础bfs
+
+```java
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode(int x) { val = x; }
+ * }
+ */
+class Solution {
+    public int[] levelOrder(TreeNode root) {
+        if(root==null)return new int[0];
+        
+        List<TreeNode>nodes=new ArrayList<>();
+        nodes.add(root);
+        List<Integer> res=printBinaryTree(nodes,new ArrayList<Integer>());
+        int[] realRes=new int[res.size()];
+        for(int i=0;i<res.size();i++)realRes[i]=res.get(i);
+        return realRes;
+    }
+    private List<Integer> printBinaryTree(List<TreeNode>nodes,List<Integer> res){
+        if(nodes.size()==0)return res;
+        List<TreeNode>next=new ArrayList<>();
+        for(TreeNode node:nodes){
+            res.add(node.val);
+            if(node.left!=null)next.add(node.left);
+            if(node.right!=null)next.add(node.right);
+        }
+        return printBinaryTree(next,res);
+    }
+}
+```
+
+### 32 - II 从上到下打印二叉树 II
+
+从上到下按层打印二叉树，同一层的节点按从左到右的顺序打印，每一层打印到一行。
+
+```
+例如:给定二叉树: `[3,9,20,null,null,15,7]`, 
+    3
+   / \
+  9  20
+    /  \
+   15   7
+返回其层次遍历结果：
+[
+  [3],
+  [9,20],
+  [15,7]
+]
+```
+
+同上，基础bfs
+
+```java
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode(int x) { val = x; }
+ * }
+ */
+class Solution {
+    public List<List<Integer>> levelOrder(TreeNode root) {
+        List<List<Integer>>res=new ArrayList<>();
+        if(root==null)return res;
+        List<TreeNode>nodes=new ArrayList<>();
+        nodes.add(root);
+        return bfs(nodes,res);
+    }
+    private List<List<Integer>> bfs(List<TreeNode> nodes,List<List<Integer>> res){
+        if(nodes.size()==0)return res;
+        List<TreeNode> tmp=new ArrayList<>();
+        List<Integer> val=new ArrayList<>();
+        for(TreeNode node:nodes){
+            val.add(node.val);
+            if(node.left!=null)tmp.add(node.left);
+            if(node.right!=null)tmp.add(node.right);
+        }
+        res.add(val);
+        return bfs(tmp,res);
+    }
+}
+```
+
+### 32 - III. 从上到下打印二叉树 III
+
+请实现一个函数按照之字形顺序打印二叉树，即第一行按照从左到右的顺序打印，第二层按照从右到左的顺序打印，第三行再按照从左到右的顺序打印，其他行以此类推。
+
+```
+例如:给定二叉树: `[3,9,20,null,null,15,7]`, 
+    3
+   / \
+  9  20
+    /  \
+   15   7
+[
+  [3],
+  [20,9],
+  [15,7]
+]
+```
+
+ 还是基础bfs，只不过加个判断标志
+
+```java
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode(int x) { val = x; }
+ * }
+ */
+class Solution {
+    public List<List<Integer>> levelOrder(TreeNode root) {
+        List<List<Integer>>res=new ArrayList<>();
+        if(root==null)return res;
+        
+        List<TreeNode>nodes=new ArrayList<>();
+        nodes.add(root);
+        return bfs(nodes,res,true);
+    }
+    private List<List<Integer>> bfs(List<TreeNode> nodes,List<List<Integer>> res,boolean flag){
+        if(nodes.size()==0)return res;
+        
+        List<TreeNode> tmp=new ArrayList<>();
+        List<Integer> val=new ArrayList<>();
+        //下一层
+        for(TreeNode node:nodes){
+            if(node.left!=null)tmp.add(node.left);
+            if(node.right!=null)tmp.add(node.right);
+        }
+        //当前层取值
+        if(flag){
+            for(int i=0;i<nodes.size();i++)val.add(nodes.get(i).val);
+        }else{
+            for(int i=nodes.size()-1;i>=0;i--)val.add(nodes.get(i).val);
+        }
+        res.add(val);
+        return bfs(tmp,res,!flag);
+    }
+}
+```
+
+### 59 - I. 滑动窗口的最大值
+
+给定一个数组 `nums` 和滑动窗口的大小 `k`，请找出所有滑动窗口里的最大值。
+
+**示例:**
+
+```
+输入: nums = [1,3,-1,-3,5,3,6,7], 和 k = 3
+输出: [3,3,5,5,6,7] 
+解释: 
+
+  滑动窗口的位置                最大值
+---------------               -----
+[1  3  -1] -3  5  3  6  7       3
+ 1 [3  -1  -3] 5  3  6  7       3
+ 1  3 [-1  -3  5] 3  6  7       5
+ 1  3  -1 [-3  5  3] 6  7       5
+ 1  3  -1  -3 [5  3  6] 7       6
+ 1  3  -1  -3  5 [3  6  7]      7
+```
+
+**提示：**
+
+你可以假设 *k* 总是有效的，在输入数组不为空的情况下，1 ≤ k ≤ 输入数组的大小。
+
+维护一个maxIndex，即最大值索引，每次滑动时只要比较其余最右边的值即可，如果索引不在范围则需要重新更新索引，对于从小到大有序的数组，这个算法则变成了O(n^2)
+
+```java
+class Solution {
+    public int[] maxSlidingWindow(int[] nums, int k) {
+        if(nums==null||nums.length<=1)return nums;
+        
+        int maxIndex=0;
+        int[] res=new int[nums.length-k+1];
+        int left=0;
+            
+        //初始化
+        for(int i=0;i<k;i++)maxIndex=nums[maxIndex]>nums[i]?maxIndex:i;
+        res[left++]=nums[maxIndex];
+        
+        for(int right=k;right<nums.length;right++){
+            if(left<=maxIndex&&maxIndex<=right){
+                maxIndex=nums[maxIndex]>nums[right]?maxIndex:right;
+            }else{
+                maxIndex=left;
+                for(int i=left;i<=right;i++)maxIndex=nums[maxIndex]>nums[i]?maxIndex:i;
+            }
+            res[left++]=nums[maxIndex];
+        }
+
+        return res;
+    }
+}
+```
+
+### 59 - II. 队列的最大值
+
+请定义一个队列并实现函数 `max_value` 得到队列里的最大值，要求函数`max_value`、`push_back` 和 `pop_front` 的时间复杂度都是O(1)。
+
+若队列为空，`pop_front` 和 `max_value` 需要返回 -1
+
+**示例 1：**
+
+```
+输入: 
+["MaxQueue","push_back","push_back","max_value","pop_front","max_value"]
+[[],[1],[2],[],[],[]]
+输出: [null,null,null,2,1,2]
+```
+
+**示例 2：**
+
+```
+输入: 
+["MaxQueue","pop_front","max_value"]
+[[],[],[]]
+输出: [null,-1,-1]
+```
+
+要维护一个最大值，保证最大值为O(1)的话，入队或者出队的时候总有一个是达不到O(1)的
+
+```java
+class MaxQueue {
+
+    private Node max;
+    private Node root;
+    private Node tail;
+    class Node{
+        int val;
+        Node next=null;
+        public Node(int val){this.val=val;}
+    }
+    
+    public MaxQueue() {
+        this.root=new Node(-1);
+        root.next=null;
+        this.max=root;
+        this.tail=root;
+    }
+    
+    public int max_value() {
+        if(root==tail)return -1;
+        return max.val;
+
+    }
+    
+    public void push_back(int value) {
+        Node tmp=new Node(value);
+        tail.next=tmp;
+        tail=tmp;
+
+        if(max==root||max.val<=value)max=tmp;
+    }
+    
+    public int pop_front() {
+        if(tail==root)return -1;
+        
+        root=root.next;//root并不代表实际节点
+        if(root==max){//最大值要出去了，重新更新max
+            Node head=root.next;//head-tail才代表实际的队列
+            max=head;
+            while(head!=null){
+                max=max.val<=head.val?head:max;
+                head=head.next;
+            }
+        }
+        max=(max==null)?root:max;
+        
+        return root.val;
+    }
+}
+
+/**
+ * Your MaxQueue object will be instantiated and called as such:
+ * MaxQueue obj = new MaxQueue();
+ * int param_1 = obj.max_value();
+ * obj.push_back(value);
+ * int param_3 = obj.pop_front();
+ */
+```
+
+### 60 n个骰子的点数
+
+把n个骰子扔在地上，所有骰子朝上一面的点数之和为s。输入n，打印出s的所有可能的值出现的概率。
+
+你需要用一个浮点数数组返回答案，其中第 i 个元素代表这 n 个骰子所能掷出的点数集合中第 i 小的那个的概率。
+
+**示例 1:**
+
+```
+输入: 1
+输出: [0.16667,0.16667,0.16667,0.16667,0.16667,0.16667]
+```
+
+**示例 2:**
+
+```
+输入: 2
+输出: [0.02778,0.05556,0.08333,0.11111,0.13889,0.16667,0.13889,0.11111,0.08333,0.05556,0.02778]
+```
+
+**限制：**
+
+```
+1 <= n <= 11
+```
+
+典型的递归求解，每一次都记录中间值，层层推进求解
+
+```java
+class Solution {
+    private static double BASE=1.0/6.0;
+    public double[] twoSum(int n) {
+        Map<Integer,Double>s=new TreeMap<>();
+        //初始化
+        for(int i=1;i<=6;i++){
+            s.put(i,BASE);
+        }
+        
+        for(int i=1;i<n;i++){
+             Map<Integer,Double>tmp=new TreeMap<>();
+            for(int j=1;j<=6;j++){
+                for(int count:s.keySet()){
+                    tmp.put(j+count,tmp.getOrDefault(j+count,0.0)+s.get(count)*BASE);
+                }
+            }
+            s=tmp;
+        }
+        double[] res=new double[s.size()];
+        int ite=0;
+        for(int count:s.keySet())res[ite++]=s.get(count);
+        return res;
+    }
+}
+```
+
+### 65不用加减乘除做加法
+
+写一个函数，求两个整数之和，要求在函数体内不得使用 “+”、“-”、“*”、“/” 四则运算符号。 
+
+**示例:**
+
+```
+输入: a = 1, b = 1
+输出: 2
+```
+
+**提示：**
+
+- `a`, `b` 均可能是负数或 0
+- 结果不会溢出 32 位整数
+
+这题位运算还是背下来吧，毕竟位运算这种模拟加法用法基本就这题，很容易就忘掉。。。
+
+^ 亦或 ----相当于无进位的求和， 想象10进制下的模拟情况：（如:19+1=20；无进位求和就是10，而非20；因为它不管进位情况）
+
+& 与 ----相当于求每位的进位数， 先看定义：1&1=1；1&0=0；0&0=0；即都为1的时候才为1，正好可以模拟进位数的情况,还是想象10进制下模拟情况：（9+1=10，如果是用&的思路来处理，则9+1得到的进位数为1，而不是10，所以要用<<1向左再移动一位，这样就变为10了）；
+
+这样公式就是：a+b=（a^b) + ((a&b)<<1) 即：每次无进位只+ 每次得到的进位数--------我们需要不断重复这个过程，直到进位数为0为止（进位数为0则直接返回a^b就好）；
+
+具体的，按照a+b=（a^b) + ((a&b)<<1) 公式，很容易写出递归式
+
+```java
+class Solution {
+    public int add(int a, int b) {
+        return b==0?a:add(a^b,(a&b)<<1);
+    }
+}
+```
+
+### 66构建乘积数组
+
+给定一个数组 `A[0,1,…,n-1]`，请构建一个数组 `B[0,1,…,n-1]`，其中 `B` 中的元素 `B[i]=A[0]×A[1]×…×A[i-1]×A[i+1]×…×A[n-1]`。不能使用除法。
+
+**示例:**
+
+```
+输入: [1,2,3,4,5]
+输出: [120,60,40,30,24]
+```
+
+**提示：**
+
+- 所有元素乘积之和不会溢出 32 位整数
+- `a.length <= 100000`
+
+最初想用C[i][j\]存储从i到j的总乘积，不过超过了内存
+
+```java
+class Solution {
+    public int[] constructArr(int[] a) {
+        if(a==null||a.length==0)return new int[0];
+        if(a.length==1)return a;
+        int[][] C=new int[a.length][a.length];
+        //从上到下打表
+        for(int i=a.length-1;i>=0;i--){
+            for(int j=i;j>=0;j--){
+                if(i==j)C[j][i]=a[j];
+                else C[j][i]=a[j]*C[j+1][i];
+            }
+        }
+       int[] res=new int[a.length];
+        res[0]=C[1][a.length-1];
+        res[a.length-1]=C[0][a.length-2];
+        for(int i=1;i<a.length-1;i++){
+            res[i]=C[0][i-1]*C[i+1][a.length-1];
+        }
+        return res;
+    }
+}
+```
+
+另一个更巧妙的方法是，构建前后缀乘积，也就是对整个B，先算前面的乘积（因为这部分是连续相乘的，不用构建二维数组），同理，在构造后面的乘积（分两次计算）
+
+```java
+class Solution {
+    public int[] constructArr(int[] a) {
+        if(a==null||a.length==0)return new int[0];
+        if(a.length==1)return a;
+        
+        int[] res=new int[a.length];
+        //基准乘数为1
+        for(int i=0;i<a.length;i++)res[i]=1;
+        
+        int left=1;
+        for(int i=0;i<a.length;i++){
+            res[i]*=left;
+            left*=a[i];
+        }
+        int right=1;
+        for(int i=a.length-1;i>=0;i--){
+            res[i]*=right;
+            right*=a[i];
+        }
+        
+        return res;
+    }
+}
+```
+
+### 67. 把字符串转换成整数
+
+写一个函数 StrToInt，实现把字符串转换成整数这个功能。不能使用 atoi 或者其他类似的库函数。 
+
+首先，该函数会根据需要丢弃无用的开头空格字符，直到寻找到第一个非空格的字符为止。
+
+当我们寻找到的第一个非空字符为正或者负号时，则将该符号与之后面尽可能多的连续数字组合起来，作为该整数的正负号；假如第一个非空字符是数字，则直接将其与之后连续的数字字符组合起来，形成整数。
+
+该字符串除了有效的整数部分之后也可能会存在多余的字符，这些字符可以被忽略，它们对于函数不应该造成影响。
+
+注意：假如该字符串中的第一个非空格字符不是一个有效整数字符、字符串为空或字符串仅包含空白字符时，则你的函数不需要进行转换。
+
+在任何情况下，若函数不能进行有效的转换时，请返回 0。
+
+**说明：**
+
+假设我们的环境只能存储 32 位大小的有符号整数，那么其数值范围为 [−231, 231 − 1]。如果数值超过这个范围，请返回  INT_MAX (231 − 1) 或 INT_MIN (−231) 。
+
+**示例 1:**
+
+```
+输入: "42"
+输出: 42
+```
+
+**示例 2:**
+
+```
+输入: "   -42"
+输出: -42
+解释: 第一个非空白字符为 '-', 它是一个负号。
+     我们尽可能将负号与后面所有连续出现的数字组合起来，最后得到 -42 。
+```
+
+**示例 3:**
+
+```
+输入: "4193 with words"
+输出: 4193
+解释: 转换截止于数字 '3' ，因为它的下一个字符不为数字。
+```
+
+**示例 4:**
+
+```
+输入: "words and 987"
+输出: 0
+解释: 第一个非空字符是 'w', 但它不是数字或正、负号。
+     因此无法执行有效的转换。
+```
+
+**示例 5:**
+
+```
+输入: "-91283472332"
+输出: -2147483648
+解释: 数字 "-91283472332" 超过 32 位有符号整数范围。 
+     因此返回 INT_MIN (−231) 。
+```
+
+较难处理的是溢出判断，要么使用更高精度的数，要么使用溢出判断
+
+```java
+class Solution {
+    public int strToInt(String str) {
+        if(str==null||str.equals(""))return 0;
+        str=str.trim();
+        if(str.equals(""))return 0;
+        
+        char flag=str.charAt(0)=='-'?'-':'+';
+        int begin=(str.charAt(0)=='-'||str.charAt(0)=='+')?1:0;
+        long res=0;
+        for(int i=begin;i<str.length();i++){
+            if('0'<=str.charAt(i)&&str.charAt(i)<='9'){
+                res=res*10+str.charAt(i)-48;
+                if(flag=='+'&&res>Integer.MAX_VALUE)return Integer.MAX_VALUE;
+                if(flag=='-'&&-res<Integer.MIN_VALUE)return Integer.MIN_VALUE;
+            }else break;
+        }
+        return flag=='-'?(int)-res:(int)res;
+    }
+}
+```
 

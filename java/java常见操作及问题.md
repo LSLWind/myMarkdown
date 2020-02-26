@@ -26,3 +26,11 @@ List<String> list=new Arraylist<>(set);
 list.addAll(set);
 ```
 
+##### List转数组
+
+使用toArray()方法，参数为数组对象
+
+```
+ String[] array = testList.toArray(new String[testList.size()]);
+```
+

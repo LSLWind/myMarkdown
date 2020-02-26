@@ -183,6 +183,14 @@ REVOKE SELECT, INSERT ON mydatabase.* FROM myuser;
 SET PASSWROD FOR myuser = Password('new_password');
 ```
 
+### 远程登录
+
+```
+mysql -h 192.168.5.116 -P 3306 -u root -p
+```
+
+
+
 ## 基础语法
 
 ### 创建database/模式

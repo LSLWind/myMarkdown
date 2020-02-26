@@ -22,3 +22,20 @@ IDEA这个工具非常强大，有很多非常强大的功能，在这里记录�
 
  Ctrl + Shift+i ，此时出现一个小窗口，使用Ctrl + Ente查看完整源码
 
+### 分析包
+
+先查找到任意一个接口，单击Navigate→Type Hierarchy。会出现该类的实现类型层次结构
+
+### 连接数据库
+
+选中view—>点击Tool Windows—>选择Database
+
+点击+号—>选择你需要连接的数据库类型—>Data Source
+
+![](https://img-blog.csdn.net/20180309133254547?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzgzNzcxOTA=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+### 编辑数据库
+
+**编辑表**
+
+右键单击表-->Modify table

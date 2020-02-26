@@ -147,7 +147,7 @@ public class Test {
 
 `@RequestMapping`可以应用于类上，表示所有控制器方法的映射的url的共同前缀
 
-```
+```java
 @Controller
 @RequestMapping("/")
 public class HomeController {
@@ -159,6 +159,12 @@ public class HomeController {
 ```
 
 `@RequestMapping`也可以映射多个url，如`@RequestMapping({"/", "/homepage"})`
+
+控制方法的返回类型为：
+
+* String：返回的是View名称
+* ModelAndView：返回的是ModelAndView中指定的跳转页面
+* Map/Void：返回的页面就是请求的页面
 
 #### 传递模型数据到视图中
 
@@ -192,9 +198,183 @@ public String spittle( @PathVariable("spittleId") long spittleId,Model model) {
 }
 ```
 
-#### 处理表单
+#### 处理表单/使用API校验表单
 
-接收前台的表单信息很简单，以Post形式发送的表单将直接放在request的报文中，对于表单来说，在后台要有一个与之对应的DAO，直接将DAO作为参数即可，该参数会使用报文中表单的同名的信息对DAO进行填充
+接收前台的表单信息很简单，以Post形式发送的表单将直接放在request的报文中，对于表单来说，在后台要有一个与之对应的DAO，直接将DAO作为参数即可，该参数会使用报文中表单的同名的信息对DAO进行填充。
+
+同时，对于表单数据来说，经常会遇到校验表单值的操作，虽说可以往里面插入校验代码，但是Spring MVC已经内置了一些校验API，都通过注解的方式进行校验，非常方便。
+
+| 注　　解       | 描　　述                                                     |
+| -------------- | ------------------------------------------------------------ |
+| `@AssertFalse` | 所注解的元素必须是Boolean类型，并且值为`false`               |
+| `@AssertTrue`  | 所注解的元素必须是Boolean类型，并且值为`true`                |
+| `@DecimalMax`  | 所注解的元素必须是数字，并且它的值要小于或等于给定的`BigDecimalString`值 |
+| `@DecimalMin`  | 所注解的元素必须是数字，并且它的值要大于或等于给定的`BigDecimalString`值 |
+| `@Digits`      | 所注解的元素必须是数字，并且它的值必须有指定的位数           |
+| `@Future`      | 所注解的元素的值必须是一个将来的日期                         |
+| `@Max`         | 所注解的元素必须是数字，并且它的值要小于或等于给定的值       |
+| `@Min`         | 所注解的元素必须是数字，并且它的值要大于或等于给定的值       |
+| `@NotNull`     | 所注解元素的值必须不能为`null`                               |
+| `@Null`        | 所注解元素的值必须为`null`                                   |
+| `@Past`        | 所注解的元素的值必须是一个已过去的日期                       |
+| `@Pattern`     | 所注解的元素的值必须匹配给定的正则表达式                     |
+| `@Size`        | 所注解的元素的值必须是`String`、集合或数组，并且它的长度要符合给定的范围 |
+
+[<img src="https://s2.ax1x.com/2020/02/18/3kTnud.png" alt="3kTnud.png" style="zoom:67%;" />](https://imgchr.com/i/3kTnud)
+
+同时必须开启校验与传入错误参数才能进行校验，使用注解@Valid与类Errors
+
+[<img src="https://s2.ax1x.com/2020/02/18/3kTrCT.png" alt="3kTrCT.png" style="zoom:67%;" />](https://imgchr.com/i/3kTrCT)
+
+如果有校验出现错误的话，那么这些错误可以通过`Errors`对象进行访问，现在这个对象已作为`processRegistration()`方法的参数。（很重要的一点需要注意，`Errors`参数要紧跟在带有`@Valid`注解的参数后面，`@Valid`注解所标注的就是要检验的参数。）`processRegistration()`方法所做的第一件事就是调用`Errors.hasErrors()`来检查是否有错误。
+
+## 渲染Web视图
+
+### 视图解析
+
+将控制器中请求处理的逻辑和视图中的渲染实现解耦是Spring MVC的一个重要特性。如果控制器中的方法直接负责产生HTML的话，就很难在不影响请求处理逻辑的前提下，维护和更新视图。控制器方法和视图的实现会在模型内容上达成一致，这是两者的最大关联，除此之外，两者应该保持足够的距离。
+
+但是，如果控制器只通过逻辑视图名来了解视图的话，那Spring该如何确定使用哪一个视图实现来渲染模型呢？这就是Spring视图解析器的任务了。
+
+Spring MVC定义了一个名为`ViewResolver`的接口，它大致如下所示：
+
+```java
+public interface ViewResolver {
+  View resolveViewName(String viewName, Locale locale)throws Exception;
+}
+```
+
+当给`resolveViewName()`方法传入一个视图名和`Locale`对象时，它会返回一个`View`实例。`View`是另外一个接口，如下所示：
+
+```java
+public interface View {
+  String getContentType();
+  void render(Map<String, ?> model,
+              HttpServletRequest request,
+              HttpServletResponse response) throws Exception;
+}
+```
+
+`View`接口的任务就是接受模型以及Servlet的request和response对象，并将输出结果渲染到response中。
+
+我们所需要做的就是编写`ViewResolver`和`View`的实现，将要渲染的内容放到response中，进而展现到用户的浏览器中。实际上，我们并不需要这么麻烦。尽管我们可以编写`ViewResolver`和`View`的实现，在有些特定的场景下，这样做也是有必要的，但是一般来讲，我们并不需要关心这些接口。Spring提供了多个内置的实现，它们能够适应大多数的场景，不同的实现能够解析不同的视图，如`InternalResourceViewResolver`一般会用于JSP，`FreeMarkerViewResolver`和`VelocityViewResolver`分别对应FreeMarker和Velocity模板视图。
+
+### 配置JSP视图解析器
+
+有一些视图解析器，如`ResourceBundleViewResolver`会直接将逻辑视图名映射为特定的`View`接口实现，而`InternalResourceViewResolver`所采取的方式并不那么直接。它遵循一种约定，会在视图名上添加前缀和后缀，进而确定一个Web应用中视图资源的物理路径。
+
+作为样例，考虑一个简单的场景，假设逻辑视图名为`home`。通用的实践是将JSP文件放到Web应用的WEB-INF目录下，防止对它的直接访问。如果我们将所有的JSP文件都放在“/WEB-INF/views/”目录下，并且`home`页的JSP名为home.jsp，那么我们可以确定物理视图的路径就是逻辑视图名`home`再加上“/WEB-INF/views/”前缀和“.jsp”后缀。
+
+<img src="https://s2.ax1x.com/2020/02/18/3kbNKe.png" alt="3kbNKe.png" style="zoom:33%;" />
+
+当使用`@Bean`注解的时候，我们可以按照如下的方式配置`Internal-ResourceView Resolver`，使其在解析视图时，遵循上述的约定。
+
+```java
+@Bean
+public ViewResolver viewResolver() {
+  InternalResourceViewResolver resolver =new InternalResourceViewResolver();
+  resolver.setPrefix("/WEB-INF/views/");
+  resolver.setSuffix(".jsp");
+  return resolver;
+}
+```
+
+```xml
+<bean id="viewResolver"
+      class="org.springframework.web.servlet.view.InternalResourceViewResolver"
+      p:prefix="/WEB-INF/views/"
+      p:suffix=".jsp" />
+```
+
+`InternalResourceViewResolver`配置就绪之后，它就会将逻辑视图名解析为JSP文件，如下所示：
+
+- `home`将会解析为“/WEB-INF/views/home.jsp”
+- `productList`将会解析为“/WEB-INF/views/productList.jsp”
+- `books/detail`将会解析为“/WEB-INF/views/books/detail.jsp”
+
+## 处理异常
+
+### Spring内置异常-状态码映射
+
+| Spring异常                                | HTTP状态码                   |
+| ----------------------------------------- | ---------------------------- |
+| `BindException`                           | 400 - Bad Request            |
+| `ConversionNotSupportedException`         | 500 - Internal Server Error  |
+| `HttpMediaTypeNotAcceptableException`     | 406 - Not Acceptable         |
+| `HttpMediaTypeNotSupportedException`      | 415 - Unsupported Media Type |
+| `HttpMessageNotReadableException`         | 400 - Bad Request            |
+| `HttpMessageNotWritableException`         | 500 - Internal Server Error  |
+| `HttpRequestMethodNotSupportedException`  | 405 - Method Not Allowed     |
+| `MethodArgumentNotValidException`         | 400 - Bad Request            |
+| `MissingServletRequestParameterException` | 400 - Bad Request            |
+| `MissingServletRequestPartException`      | 400 - Bad Request            |
+| `NoSuchRequestHandlingMethodException`    | 404 - Not Found              |
+| `TypeMismatchException`                   | 400 - Bad Request            |
+
+### 自定义异常-状态码映射@ResponseStatus
+
+使用**@ResponseStatus**注解，可以将异常映射为特定的状态码，就和Spring内置的异常状态码一样
+
+```java
+@ResponseStatus(value = HttpStatus.NOT_FOUND,reason = "Not Found")
+class  SpittleNotFoundException extends RuntimeException{
+}
+
+RequestMapping(value="/{spittleId}", method=RequestMethod.GET)
+public String spittle(
+    @PathVariable("spittleId") long spittleId,Model model) {
+  Spittle spittle = spittleRepository.findOne(spittleId);
+  if (spittle == null) {
+    throw new SpittleNotFoundException();
+  }
+  model.addAttribute(spittle);
+  return "spittle";
+}
+```
+
+### 专门处理异常@ExceptionHandler
+
+@ExceptionHandler用在一个控制器中的一个方法上，专门处理异常，只要该控制器中的方法抛出了指定异常，就会使用该方法进行处理，相当于替代了try...catch语句，用于简化代码
+
+```java
+@ExceptionHandler(DuplicateSpittleException.class)//传入一个触发的异常类
+public String handleDuplicateSpittle() {
+  return "error/duplicate";
+}
+@RequestMapping(method=RequestMethod.POST)
+public String saveSpittle(SpittleForm form, Model model) {
+  spittleRepository.save(
+      new Spittle(null, form.getMessage(), new Date(),
+          form.getLongitude(), form.getLatitude()));
+  return "redirect:/spittles";
+}
+```
+
+### 控制器通知@ControllerAdvice
+
+控制器通知（controller advice）是任意带有`@ControllerAdvice`注解的类，这个类会包含一个或多个如下类型的方法：
+
+- `@ExceptionHandler`注解标注的方法；
+- `@InitBinder`注解标注的方法；
+- `@ModelAttribute`注解标注的方法。
+
+在带有`@ControllerAdvice`注解的类中，以上所述的这些方法会运用到整个应用程序所有控制器中带有`@RequestMapping`注解的方法上。
+
+`@ControllerAdvice`注解本身已经使用了`@Component`，因此`@ControllerAdvice`注解所标注的类将会自动被组件扫描获取到，就像带有`@Component`注解的类一样。
+
+`@ControllerAdvice`最为实用的一个场景就是将所有的`@ExceptionHandler`方法收集到一个类中，这样所有控制器的异常就能在一个地方进行一致的处理。例如，我们想将`DuplicateSpittleException`的处理方法用到整个应用程序的所有控制器上。
+
+```java
+@ControllerAdvice 
+public class AppWideExceptionHandler{
+    @ExceptionHandler(DuplicateSpittleException.class)//传入一个触发的异常类
+    public String handleDuplicateSpittle() {
+      return "error/duplicate";
+    }
+}
+```
+
+如上所示，如果任意的控制器方法抛出了`DuplicateSpittleException`，不管这个方法位于哪个控制器中，都会调用这个`duplicateSpittleHandler()`方法来处理异常。
 
 ## 进行Web测试
 
@@ -381,76 +561,7 @@ mockMvc = webAppContextSetup(wac)
             .andExpect(model().attributeExists("user"));
 ```
 
-
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### 基础概念
+## 基础概念
 
 #### 媒体格式
 
@@ -475,8 +586,6 @@ mockMvc = webAppContextSetup(wac)
 - application/msword  ： Word文档格式
 - application/octet-stream ： 二进制流数据（如常见的文件下载）
 - application/x-www-form-urlencoded ： 中默认的encType，form表单数据被编码为key/value格式发送到服务器（表单默认的提交数据的格式）
-
-#### 模板引擎
 
 #### DipatcherServlet
 
@@ -549,41 +658,7 @@ public class MyWebApplicationInitializer implements WebApplicationInitializer {
         </init-param>
 ```
 
-#### @Controller/@RequestMapping与方法参数
-
-DispatcherServlet需读取配置文件信息，配置文件可以是一个类，使用注解声明，如下
-
-```java
-@Configuration//声明这是一个配置class
-@ComponentScan("org.example.web")//自动扫描指定package下注解
-public class WebConfig {
-
-    // ...
-}
-```
-
-也可以使用xml文件，如下
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:p="http://www.springframework.org/schema/p"
-    xmlns:context="http://www.springframework.org/schema/context"
-    xsi:schemaLocation="
-        http://www.springframework.org/schema/beans
-        https://www.springframework.org/schema/beans/spring-beans.xsd
-        http://www.springframework.org/schema/context
-        https://www.springframework.org/schema/context/spring-context.xsd">
-<!--开启注解扫描-->
-    <context:component-scan base-package="org.example.web"/>
-
-    <!-- ... -->
-
-</beans>
-```
-
-##### @RequestMapping 
+#### @RequestMapping 
 
 用来处理请求地址映射的注解，可用于类或方法上。用于类上，表示类中的所有响应请求的方法都是以该地址作为父路径；用于方法上，表示在类的父路径下追加方法上注解中的地址将会访问到该方法。 @RequestMapping 默认响应所有HTTP方法，也可以指定HTTP方法如下，作用相同
 
@@ -600,8 +675,6 @@ public class WebConfig {
  `@RequestBody` 这个注解的使用，使得REST接口接收的不再content-type为`application/x-www-form-urlencoded`的请求, 反而需要显示指定为`application/json` 
 
 请求方法一般设置为POST，用在Controller方法参数内声明参数，使用@RequestBody声明参数变量获取json中的数据，json是k-v，@RequestBody注入的属性也是k-v，可以是map，也可以是基于setter的对象
-
- https://juejin.im/post/5b5efff0e51d45198469acea 
 
 ##### @Responsebody 
 
@@ -792,68 +865,6 @@ public String checkA(Model model, HttpSession session, @SessionAttribute("userId
     .......
    }
 ```
-
-#### 返回类型
-
-##### String
-
-返回的是View名称
-
-##### ModelAndView
-
-返回的是ModelAndView中指定的跳转页面
-
-##### Map/Void
-
-返回的页面就是请求的页面
-
-### JSP中使用Model数据
-
-直接通过${modelAttribute}即可取值，取值优先级为map,mapModel,session
-
- 
-
-
-
-#### 处理方法-Handler Methods
-
-##### 方法参数-Method Arguments
-
-**获取请求request**
-
-有三种方式
-
-1. 直接传入参数 HttpServletRequest request 即可，线程安全
-2. 使用注解，直接在控制器中声明一个request，线程安全
-
-```java
- @Autowired
-  private HttpServletRequest request; //自动注入request
-```
-
-3. 手动调用，线程安全
-
-```java
-  HttpServletRequest request = ((ServletRequestAttributes) (RequestContextHolder.currentRequestAttributes())).getRequest();
-```
-
-
-
-### 测试
-
-maven引入依赖
-
-```xml
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-test</artifactId>
-      <version>5.1.9.RELEASE</version>
-    </dependency>
-```
-
-
-
-
 
 ### 常见错误
 

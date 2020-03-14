@@ -179,7 +179,7 @@ alert("Color is now " + color);
 
 在这个简单的例子中，函数 changeColor() 的作用域链包含两个对象：它自己的变量对象（其中定义着 arguments 对象）和全局环境的变量对象。可以在函数内部访问变量 color ，就是因为可以在这个作用域链中找到它。
 
-#### try-catch与with语句
+### try-catch与with语句
 
 这两个语句都会在作用域链的前端添加一个变量对象。对 with 语句来说，会将指定的对象添加到作用域链中。对 catch 语句来说，会创建一个新的变量对象，其中包含的是被抛出的错误对象的声明。
 
@@ -195,11 +195,7 @@ function buildUrl() {
 
 在此， with 语句接收的是 location 对象，因此其变量对象中就包含了 location 对象的所有属性和方法，而这个变量对象被添加到了作用域链的前端。 buildUrl() 函数中定义了一个变量 qs 。当在with 语句中引用变量 href 时（实际引用的是 location.href ），可以在当前执行环境的变量对象中找到。当引用变量 qs 时，引用的则是在 buildUrl() 中定义的那个变量，而该变量位于函数环境的变量对象中。至于 with 语句内部，则定义了一个名为 url 的变量，因而 url 就成了函数执行环境的一部分，所以可以作为函数的值被返回。
 
-
-
-### 对象Object
-
-#### 创建对象
+### 对象
 
  可以通过对象直接量、关键字new和（ECMAScript 5中的）Object.create()函数来创建对象。 
 
@@ -211,7 +207,7 @@ var point={x:0,y:0};//两个属性
 var point2={x:point.x,y:point.y+1};//更复杂的值
 ```
 
- ECMAScript 5中，对象直接量中的最后一个属性后的逗号将忽略，且在ECMAScript 3的大部分实现中也可以忽略这个逗号，但在IE中则报错。
+ ECMAScript 5中，对象直接量中的最后一个属性后的逗号将忽略。
 
  **new运算符**创建并初始化一个新对象。关键字new后跟随一个函数调用。这里的函数称做构造函数（constructor），构造函数用以初始化一个新创建的对象。JavaScript语言核心中的原始类型都包含内置构造函数。如`var o=new Object();//创建一个空对象，和{}一样`
 
@@ -221,7 +217,27 @@ ECMAScript 5定义了一个名为**Object.create()**的方法，它创建一个�
 var o1=Object.create({x:1,y:2});//o1继承了属性x和y
 ```
 
-#### 对象属性与方法
+**对象属性访问**
+
+对象的属性有两种访问方式
+
+```js
+object.property
+object["property"]
+```
+
+区别在于[]访问方式是通过字符串进行访问，主要优点是可以通过变量来访问属性，如
+
+```js
+var addr="";
+for(i=0;i＜4;i++){
+	addr+=customer["address"+i]+'\n';
+}
+```
+
+ 这段代码读取customer对象的address0、address1、address2和address3属性，并将它们连接起来。 
+
+**对象属性与方法**
 
 Object 的每个实例都具有下列属性和方法。
 
@@ -235,26 +251,6 @@ Object 的每个实例都具有下列属性和方法。
   相同。
 
 由于在 ECMAScript 中 Object 是所有对象的基础，因此所有对象都具有这些基本的属性和方法。
-
-**对象属性访问**
-
-对象的属性有两种访问方式
-
-```js
-object.property
-object["property"]
-```
-
-区别在于[]访问方式是通过字符串进行访问，更加灵活，下标可以动态变化，如
-
-```js
-var addr="";
-for(i=0;i＜4;i++){
-	addr+=customer["address"+i]+'\n';
-}
-```
-
- 这段代码读取customer对象的address0、address1、address2和address3属性，并将它们连接起来。 
 
 **继承**
 
@@ -277,11 +273,11 @@ var o={x:1}
 "toString"in o;//true：o继承toString属性
 ```
 
- 另一种更简便的方法是使用“!==”判断一个属性是否是undefined，如` o.x!==undefined;//true:o中有属性x `
+ 另一种更简便的方法是使用“!\==”判断一个属性是否是undefined，如` o.x!==undefined;//true:o中有属性x `
 
 (Object)对象的hasOwnProperty()方法用来检测给定的名字是否是对象的自有属性。对于继承属性它将返回false,如` o.hasOwnProperty("x");//true：o有一个自有属性x `， propertyIsEnumerable()是hasOwnProperty()的增强版，只有检测到是自有属性且这个属性的可枚举性为true时它才返回true。 
 
-  **属性getter和setter**
+ **属性getter和setter**
 
 在ECMAScript 5中，属性值可以用一个或两个方法替代，这两个方法就是getter和setter，使用关键字get与set 进行声明，方法名就是属性名，这样的属性称之为存储器属性，如：
 
@@ -303,19 +299,13 @@ var random={
 
  对象序列化（serialization）是指将对象的状态转换为字符串，也可将字符串还原为对象。ECMAScript 5提供了内置函数JSON.stringify()和JSON.parse()用来序列化和还原JavaScript对象。这些方法都使用JSON作为数据交换格式 
 
-### 对象属性
+### 原型prototype
 
- 每一个对象都有与之相关的原型（prototype）、类（class）和可扩展性（extensible attribute） 
-
-**原型prototype**
-
-每一个JavaScript对象（null除外）都和另一个对象相关联。“另一个”对象就是我们熟知的原型，每一个对象都从原型继承属性。
+**每个构造函数都有一个原型对象，原型对象都包含一个指向构造函数的指针，而实例都包含一个指向原型对象的内部指针。**
 
 所有通过对象直接量创建的对象都具有同一个原型对象，并可以通过`对象.prototype`获得对原型对象的引用。
 
 没有原型的对象为数不多，Object.prototype就是其中之一。它不继承任何属性。其他原型对象都是普通对象，普通对象都具有原型。例如，Date.prototype的属性继承自Object.prototype，因此由new Date()创建的Date对象的属性同时继承自 Date.prototype和Object.prototype。这一系列链接的原型对象就是所谓的“原型链”（prototype chain）。(原型的引入为js提供了继承特性) 
-
- 通过对象直接量创建的对象使用Object.prototype作为它们的原型。通过new创建的对象使用构造函数的prototype属性作为它们的原型。，如通过new Date()创建的对象的原型就是Date.prototype。通过Object.create()创建的对象使用第一个参数（也可以是null）作为它们的原型。 
 
 要想检测一个对象是否是另一个对象的原型（或处于原型链中），请使用isPrototypeOf()方法。例如，可以通过p.isPrototypeOf(o)来检测p是否是o的原型：
 
@@ -324,6 +314,226 @@ var p={x:1};//定义一个原型对象
 var o=Object.create(p);//使用这个原型创建一个对象
 p.isPrototypeOf(o)//=＞true:o继承自p
 Object.prototype.isPrototypeOf(o)//=＞true:p继承自Object.prototype
+```
+
+如果原型中包含了引用，那么两个不同的实例包含的将是同一个引用，此外，如果在已经创建了实例的情况下重写原型，那么就会切断现有实例与新原型之间的联系。
+
+```js
+function Person(){
+}
+Person.prototype = {
+	constructor: Person,
+	name : "Nicholas",
+	age : 29,
+	job : "Software Engineer",
+	friends : ["Shelby", "Court"],
+	sayName : function () {
+		alert(this.name);
+	}
+};
+var person1 = new Person();
+var person2 = new Person();
+person1.friends.push("Van");
+alert(person1.friends); //"Shelby,Court,Van"
+alert(person2.friends); //"Shelby,Court,Van"
+alert(person1.friends === person2.friends); //true
+```
+
+**组合使用构造函数模式和原型模式**
+
+构造函数模式用于定义实例属性，而原型模式用于定义方法和共享的属性。
+
+```js
+function Person(name, age, job){
+	this.name = name;
+	this.age = age;
+	this.job = job;
+	this.friends = ["Shelby", "Court"];
+}
+Person.prototype = {
+	constructor : Person,
+	sayName : function(){
+		alert(this.name);
+	}
+}
+var person1 = new Person("Nicholas", 29, "Software Engineer");
+var person2 = new Person("Greg", 27, "Doctor");
+person1.friends.push("Van");
+alert(person1.friends); //"Shelby,Count,Van"
+alert(person2.friends); //"Shelby,Count"
+alert(person1.friends === person2.friends); //false
+alert(person1.sayName === person2.sayName); //true
+```
+
+**动态原型模式**
+
+也是一种组合构造函数与原型的模式，不过将原型放在构造函数里
+
+```js
+function Person(name, age, job){
+	//属性
+	this.name = name;
+	this.age = age;
+	this.job = job;
+	// 方法
+	if (typeof this.sayName != "function"){
+		Person.prototype.sayName = function(){
+			alert(this.name);
+		};
+	}
+}
+var friend = new Person("Nicholas", 29, "Software Engineer");
+friend.sayName();
+```
+
+这里只在 sayName() 方法不存在的情况下，才会将它添加到原型中。这段代码只会在初次调用构造函数时才会执行。此后，原型已经完成初始化，不需要再做什么修改了。
+
+**寄生组合式继承**
+
+```js
+//相当于对对象进行了一次浅拷贝，返回新的继承对象实例
+function object(o){
+	function F(){}
+	F.prototype = o;
+	return new F();
+}
+//寄生组合式继承的基本模式
+function inheritPrototype(subType, superType){
+	var prototype = object(superType.prototype); //创建对象
+	prototype.constructor = subType; //增强对象
+	subType.prototype = prototype; //指定对象
+}
+function SuperType(name){
+	this.name = name;
+	this.colors = ["red", "blue", "green"];
+}
+SuperType.prototype.sayName = function(){
+	alert(this.name);
+};
+function SubType(name, age){
+	SuperType.call(this, name);
+	this.age = age;
+}
+inheritPrototype(SubType, SuperType);
+SubType.prototype.sayAge = function(){
+	alert(this.age);
+};
+```
+
+### 原型链
+
+```js
+function SuperType(){
+	this.property = true;
+}
+SuperType.prototype.getSuperValue = function(){
+	return this.property;
+};
+function SubType(){
+	this.subproperty = false;
+}
+//继承了 SuperType
+SubType.prototype = new SuperType();
+SubType.prototype.getSubValue = function (){
+	return this.subproperty;
+};
+var instance = new SubType();
+alert(instance.getSuperValue()); //true
+```
+
+SubType 继承了 SuperType ，而继承是通过创建 SuperType 的实例，并将该实例赋给SubType.prototype 实现的。实现的本质是重写原型对象，代之以一个新类型的实例。换句话说，原来存在于 SuperType 的实例中的所有属性和方法，现在也存在于 SubType.prototype 中了。
+
+<img src="https://i.loli.net/2020/03/02/tgGIDNjFC7yP4qK.png" alt="image.png" style="zoom:50%;" />
+
+在继承中引用类型属性会被子类的所有实例共享
+
+```js
+function SuperType(){
+	this.colors = ["red", "blue", "green"];
+}
+function SubType(){
+}
+//继承了 SuperType
+SubType.prototype = new SuperType();
+var instance1 = new SubType();
+instance1.colors.push("black");
+alert(instance1.colors); //"red,blue,green,black"
+var instance2 = new SubType();
+alert(instance2.colors); //"red,blue,green,black"
+```
+
+这个例子中的 SuperType 构造函数定义了一个 colors 属性，该属性包含一个数组（引用类型值）。SuperType 的每个实例都会有各自包含自己数组的 colors 属性。**当 SubType 通过原型链继承了SuperType 之后， SubType.prototype 就变成了 SuperType 的一个实例**，因此它也拥有了一个它自己的 colors 属性——就跟专门创建了一个 SubType.prototype.colors 属性一样。结果就是 SubType 的所有实例都会共享这一个 colors 属性。
+
+**借用构造函数**
+
+为了解决上述问题，可以使用call()方法将父类的执行环境赋予子类（如同java中的super())
+
+```java
+function SuperType(){
+	this.colors = ["red", "blue", "green"];
+}
+function SubType(){
+	// 继承了 SuperType
+	SuperType.call(this);
+}
+var instance1 = new SubType();
+instance1.colors.push("black");
+alert(instance1.colors); //"red,blue,green,black"
+var instance2 = new SubType();
+alert(instance2.colors); //"red,blue,green"
+```
+
+通过使用 call() 方法（或 apply() 方法也可以），我们实际上是在（未来将要）新创建的 SubType 实例的环境下调用了 SuperType 构造函数。这样一来，就会在新 SubType 对象上执行 SuperType() 函数中定义的所有对象初始化代码。
+
+**向父类中传递参数**
+
+```js
+function SuperType(name){
+	this.name = name;
+}
+function SubType(){
+	//继承了 SuperType，同时还传递了参数
+	SuperType.call(this, "Nicholas");
+	//实例属性
+	this.age = 29;
+}
+var instance = new SubType();
+alert(instance.name); //"Nicholas";
+alert(instance.age); //29
+```
+
+**组合继承**
+
+原型指向父类，构造函数指向子类，这样可以更加灵活的运用继承机制
+
+```js
+function SuperType(name){
+	this.name = name;
+	this.colors = ["red", "blue", "green"];
+}
+SuperType.prototype.sayName = function(){
+	alert(this.name);
+};
+function SubType(name, age){
+	//继承属性
+	SuperType.call(this, name);
+	this.age = age;
+}
+//继承方法
+SubType.prototype = new SuperType();
+SubType.prototype.constructor = SubType;
+SubType.prototype.sayAge = function(){
+	alert(this.age);
+};
+var instance1 = new SubType("Nicholas", 29);
+instance1.colors.push("black");
+alert(instance1.colors); //"red,blue,green,black"
+instance1.sayName(); //"Nicholas";
+instance1.sayAge(); //29
+var instance2 = new SubType("Greg", 27);
+alert(instance2.colors); //"red,blue,green"
+instance2.sayName(); //"Greg";
+instance2.sayAge(); //27
 ```
 
 ### 对象方法
@@ -344,7 +554,7 @@ var s={x:1,y:1}.toString();
 
 ### 数组
 
-数组是值的有序集合。每个值叫做一个元素，而每个元素在数组中有一个位置，以数字表示，称为索引。JavaScript数组是无类型的：数组元素可以是任意类型，并且同一个数组中的不同元素也可能有不同的类型。数组的元素甚至也可能是对象或其他数组，这允许创建复杂的数据结构，如对象的数组和数组的数组。
+JavaScript数组是无类型的：数组元素可以是任意类型，并且同一个数组中的不同元素也可能有不同的类型。数组的元素甚至也可能是对象或其他数组，这允许创建复杂的数据结构，如对象的数组和数组的数组。
 
  JavaScript数组是动态的：根据需要它们会增长或缩减，并且在创建数组时无须声明一个固定的大小或者在数组大小变化时无须重新分配空间。  
 
@@ -386,6 +596,14 @@ a.push("zero")//在末尾添加一个元素。a=["zero"]
 ```
 
  数组有pop()方法（它和push()一起使用），后者一次使减少长度1并返回被删除元素的值。还有一个shift()方法（它和unshift()一起使用），从数组头部删除一个元素。 
+
+数组的length属性并不是只读的，可以动态改变，利用这一特性可直接在末尾添加属性
+
+```js
+var colors = ["red", "blue", "green"]; // 创建一个包含 3 个字符串的数组
+colors[99] = "black"; // （在位置 99 ）添加一种颜色
+alert(colors.length); // 100
+```
 
 **多维数组**
 
@@ -548,9 +766,9 @@ Array.isArray([])//=＞true
 Array.isArray({})//=＞false
 ```
 
-## 函数
+### 函数
 
- 函数使用function关键字来定义。如果return语句没有一个与之相关的表达式，则它返回undefined值。如果一个函数不包含return语句，那它就只执行函数体中的每条语句，并返回undefined值给调用者。 
+函数使用function关键字来定义。如果return语句没有一个与之相关的表达式，则它返回undefined值。如果一个函数不包含return语句，那它就只执行函数体中的每条语句，并返回undefined值给调用者。 
 
 ```js
 //输出o的每个属性的名称和值，返回undefined
@@ -561,6 +779,10 @@ for(var p in o)
 ```
 
  如果函数或者方法调用之前带有关键字new，它就构成构造函数调用，也就是说，构造函数是与对象同名的函数 
+
+**函数名仅仅是指向函数的指针，因此函数名与包含对象指针的其他变量没有什么不同。**
+
+正是因为函数名是指针，函数是对象，所以没有重载，后一个函数会覆盖前一个同名的函数。
 
 **可选形参**
 
@@ -589,11 +811,94 @@ a=a||[];
 
 当调用函数的时候传入的实参个数超过函数定义时的形参个数时，没有办法直接获得未命名值的引用。参数对象解决了这个问题。在函数体内，标识符**arguments**是指向实参对象的引用，实参对象是一个类数组对象，这样可以通过数字下标就能访问传入函数的实参值，而不用非要通过名字来得到实参。
 
+**this**
+
+this指向的是当前的执行环境
+
+```js
+window.color = "red";
+var o = { color: "blue" };
+function sayColor(){
+alert(this.color);
+}
+sayColor(); //"red"
+o.sayColor = sayColor;
+o.sayColor(); //"blue"
+```
+
+**函数属性与方法**
+
+ length 属性表示函数希望接收的命名参数的个数，也就是定义的形参个数
+
+**call()与apply()**
+
+每个函数都包含两个非继承而来的方法： apply() 和 call() 。这两个方法的用途都是在特定的作用域中调用函数，实际上等于设置函数体内 this 对象的值。
+
+ apply() 方法接收两个参数：一个是在其中运行函数的作用域，另一个是参数数组。其中，第二个参数可以是 Array 的实例，也可以是arguments 对象。
+
+```js
+function sum(num1, num2){
+	return num1 + num2;
+}
+function callSum1(num1, num2){
+	return sum.apply(this, arguments); // 传入 arguments 对象
+}
+function callSum2(num1, num2){
+	return sum.apply(this, [num1, num2]); // 传入数组
+}
+alert(callSum1(10,10)); //20
+alert(callSum2(10,10)); //20
+```
+
+callSum1() 在执行 sum() 函数时传入了 this 作为 this 值（因为是在全局作用域中调用的，所以传入的就是 window 对象）和 arguments 对象。而 callSum2 同样也调用了sum() 函数，但它传入的则是 this 和一个参数数组。这两个函数都会正常执行并返回正确的结果。
+
+call() 方法与 apply() 方法的作用相同，它们的区别仅在于接收参数的方式不同。对于 call()方法而言，第一个参数是 this 值没有变化，变化的是其余参数都直接传递给函数。换句话说，在使用call() 方法时，传递给函数的参数必须逐个列举出来。
+
+```js
+function sum(num1, num2){
+	return num1 + num2;
+}
+function callSum(num1, num2){
+	return sum.call(this, num1, num2);
+}
+alert(callSum(10,10)); //20
+```
+
+apply() 和 call() 真正强大的地方是能够扩充函数赖以运行的作用域。
+
+```js
+window.color = "red";
+var o = { color: "blue" };
+function sayColor(){
+	alert(this.color);
+}
+sayColor(); //red
+sayColor.call(this); //red
+sayColor.call(window); //red
+sayColor.call(o); //blue
+```
+
+也就是说，apply()与call()能够扩充函数运行的作用域。使用 call()或apply()来扩充作用域的最大好处，就是对象不需要与方法有任何耦合关系。只要将对象（对象作用域）作为参数传入即可，而不用使用对象调用方法。
+
+ECMAScript 5 还定义了一个方法： bind() 。这个方法会创建一个函数的实例，其 this 值会被绑定到传给 bind() 函数的值。
+
+```js
+window.color = "red";
+var o = { color: "blue" };
+function sayColor(){
+	alert(this.color);
+}
+var objectSayColor = sayColor.bind(o);
+objectSayColor(); //blue
+```
+
+在这里， sayColor() 调用 bind() 并传入对象 o ，创建了 o bjectSayColor() 函数。 objectSayColor() 函数的 this 值等于 o ，因此即使是在全局作用域中调用这个函数，也会看到 "blue" 。
+
 ### 闭包
 
- JavaScript也采用词法作用域（lexical scoping），也就是说，函数的执行依赖于变量作用域，这个作用域是在函数定义时决定的，而不是函数调用时决定的。为了实现这种词法作用域，JavaScript函数对象的内部状态不仅包含函数的代码逻辑，还必须引用当前的作用域链。函数对象可以通过作用域链相互关联起来，函数体内部的变量都可以保存在函数作用域内，这种特性在计算机科学文献中称为“闭包” 。
+**闭包**是指有权访问另一个函数作用域中的变量的函数。创建闭包的常见方式，就是在一个函数内部创建另一个函数
 
- 从技术的角度讲，所有的JavaScript函数都是闭包：它们都是对象，它们都关联到作用域链。 
+一般来讲，当函数执行完毕后，局部活动对象就会被销毁，内存中仅保存全局作用域（全局执行环境的变量对象）。但是，闭包的情况又有所不同。
 
 ```js
 var scope="global scope";//全局变量
@@ -698,12 +1003,195 @@ function addPrivateProperty(o,name,predicate){
 }
 ```
 
-### 函数属性与常用方法
+### 函数表达式
 
+函数表达式有几种不同的语法形式。下面是最常见的一种形式。
 
+```js
+var functionName = function(arg0, arg1, arg2){
+//函数体
+};
+```
 
-**call()与apply()**
+函数表达式可以避免函数提升，赋值给变量时更加灵活
 
-**JavaScript中的函数也是对象，和其他JavaScript对象没什么两样，函数对象也可以包含方法。其中的两个方法call()和apply()可以用来间接地调用函数。两个方法都允许显式指定调用所需的this值，也就是说，任何函数可以作为任何对象的方法来调用，哪怕这个函数不是那个对象的方法。（类似于，所有函数都可以作为某个对象的静态方法来调用，函数本身就是对象）**
+```js
+//不要这样做！
+if(condition){
+	function sayHi(){
+		alert("Hi!");
+	}
+} else {
+	function sayHi(){
+		alert("Yo!");
+	}
+}
+```
 
-两个方法都可以指定调用的实参。ca ll()方法使用它自有的实参 
+上述代码会导致函数提升，使condition无效，使用函数表达式就没问题
+
+```js
+//可以这样做
+var sayHi;
+if(condition){
+	sayHi = function(){
+		alert("Hi!");
+	};
+} else {
+	sayHi = function(){
+		alert("Yo!");
+	};
+}
+```
+
+## 常用对象
+
+### Date
+
+```js
+var now = new Date();
+```
+
+在调用 Date 构造函数而不传递参数的情况下，新创建的对象自动获得当前日期和时间。如果想根据特定的日期和时间创建日期对象，必须传入表示该日期的毫秒数（即从 UTC 时间 1970 年 1 月 1 日午夜起至该日期止经过的毫秒数）。为了简化这一计算过程，ECMAScript 提供了两个方法： Date.parse()和 Date.UTC() 。
+其中， Date.parse() 方法接收一个表示日期的字符串参数，然后尝试根据这个字符串返回相应日期的毫秒数。ECMA-262 没有定义 Date.parse() 应该支持哪种日期格式，因此这个方法的行为因实现而异，而且通常是因地区而异。
+
+Date.UTC() 方法同样也返回表示日期的毫秒数。Date.UTC() 的参数分别是年份、基于 0 的月份（一月是 0，二月是 1，以此类推）、月中的哪一天（1 到 31）、小时数（0 到 23）、分钟、秒以及毫秒数。在这些参数中，只有前两个参数（年和月）是必需的。如果没有提供月中的天数，则假设天数为 1；如果省略其他参数，则统统假设为 0。
+
+```js
+// GMT 时间 2000 年 1 月 1 日午夜零时
+var y2k = new Date(Date.UTC(2000, 0));
+// GMT 时间 2005 年 5 月 5 日下午 5:55:55
+var allFives = new Date(Date.UTC(2005, 4, 5, 17, 55, 55));
+```
+
+ECMAScript 5 添加了 Data.now() 方法，返回表示调用这个方法时的日期和时间的毫秒数。这个方法简化了使用 Data 对象分析代码的工作。例如：
+
+```js
+//取得开始时间
+var start = Date.now();
+//调用函数
+doSomething();
+//取得停止时间
+var stop = Date.now(),
+result = stop – start;
+```
+
+Date 类型还有一些专门用于将日期格式化为字符串的方法，这些方法如下。
+
+*  toDateString() ——以特定于实现的格式显示星期几、月、日和年；
+* toTimeString() ——以特定于实现的格式显示时、分、秒和时区；
+*  toLocaleDateString() ——以特定于地区的格式显示星期几、月、日和年；
+*  toLocaleTimeString() ——以特定于实现的格式显示时、分、秒；
+* toUTCString() ——以特定于实现的格式完整的 UTC 日期
+
+### RegExp
+
+ECMAScript 通过 RegExp 类型来支持正则表达式。使用下面类似 Perl 的语法，就可以创建一个正
+则表达式。
+
+```js
+var expression = / pattern / flags ;
+```
+
+pattern是正则表达式，flag是模式
+
+每个正则表达式都可带有一或多个标志（flags），用以标明正则表达式的行为。
+正则表达式的匹配模式支持下列 3 个标志。
+
+* g ：表示全局（global）模式，即模式将被应用于所有字符串，而非在发现第一个匹配项时立即停止；
+* i ：表示不区分大小写（case-insensitive）模式，即在确定匹配项时忽略模式与字符串的大小写；
+* m ：表示多行（multiline）模式，即在到达一行文本末尾时还会继续查找下一行中是否存在与模式匹配的项。
+
+```js
+//匹配字符串中所有"at"的实例
+var pattern1 = /at/g;
+// 匹配第一个"bat"或"cat"，不区分大小写
+var pattern2 = /[bc]at/i;
+//匹配所有以"at"结尾的 3 个字符的组合，不区分大小写
+var pattern3 = /.at/gi;
+```
+
+**exec()/test()**
+
+exec() 接受一个参数，即要应用模式的字符串，然后返回包含第一个匹配项信息的数组；或者在没有匹配项的情况下返回 null 。
+
+对于 exec() 方法而言，即使在模式中设置了全局标志（ g ），它每次也只会返回一个匹配项。在不设置全局标志的情况下，在同一个字符串上多次调用 exec() 将始终返回第一个匹配项的信息。而在设置全局标志的情况下，每次调用 exec() 则都会在字符串中继续查找新匹配项
+
+test()方法接受一个字符串参数。在模式与该参数匹配的情况下返回true ；否则，返回 false 
+
+### Number
+
+数值类型的包装类
+
+**toFixed()**
+
+进行数值的自动舍入
+
+```js
+var num = 10.005;
+alert(num.toFixed(2)); //"10.01"
+```
+
+### Global
+
+ECMAScript 中没有全局变量或全局函数；所有在全局作用域中定义的属性和函数，都是 Global 对象的属性。诸如 isNaN() 、 isFinite() 、 parseInt() 以及 parseFloat() ，实际上全都是 Global对象的方法。除此之外， Global 对象还包含其他一些方法。
+
+**URI 编码方法**
+
+Global 对象的encodeURI() 和 encodeURIComponent() 方法可以对 URI进行编码，以便发送给浏览器。有效的 URI 中不能包含某些字符，例如空格。而这两个 URI 编码方法就可以对 URI 进行编码，它们用特殊的 UTF-8 编码替换所有无效的字符，从而让浏览器能够接受和理解。
+其中， encodeURI() 主要用于整个 URI（例如，http://www.wrox.com/illegal value.htm），而 encode-
+URIComponent() 主要用于对 URI 中的某一段（例如前面 URI 中的 illegal value.htm ）进行编码。它们的主要区别在于， encodeURI() 不会对本身属于 URI 的特殊字符进行编码，例如冒号、正斜杠、问号和井字号；而 encodeURIComponent() 则会对它发现的任何非标准字符进行编码。来看下面的例子。
+
+```js
+var uri = "http://www.wrox.com/illegal value.htm#start";
+//"http://www.wrox.com/illegal%20value.htm#start"
+alert(encodeURI(uri));
+//"http%3A%2F%2Fwww.wrox.com%2Fillegal%20value.htm%23start"
+alert(encodeURIComponent(uri));
+```
+
+使用 encodeURI() 编码后的结果是除了空格之外的其他字符都原封不动，只有空格被替换成了%20 。而 encodeURIComponent() 方法则会使用对应的编码替换所有非字母数字字符。这也正是可以对整个 URI使用 encodeURI() ，而只能对附加在现有 URI后面的字符串使用 encodeURIComponent()的原因所在。
+一 般 来 说 ， 我 们 使 用 encodeURIComponent() 方法的时候要比使用encodeURI() 更多，因为在实践中更常见的是对查询字符串参数而不是对基础 URI进行编码。
+与 encodeURI() 和 encodeURIComponent() 方法对应的两个方法分别是 decodeURI() 和decodeURIComponent() 。其中， decodeURI() 只能对使用 encodeURI() 替换的字符进行解码。例如，
+它可将 %20 替换成一个空格，但不会对 %23 作任何处理，因为 %23 表示井字号（ # ），而井字号不是使用
+encodeURI() 替换的。同样地， decodeURIComponent() 能够解码使用 encodeURIComponent() 编码的所有字符，即它可以解码任何特殊字符的编码。
+
+```js
+var uri = "http%3A%2F%2Fwww.wrox.com%2Fillegal%20value.htm%23start";
+//http%3A%2F%2Fwww.wrox.com%2Fillegal value.htm%23start
+alert(decodeURI(uri));
+//http://www.wrox.com/illegal value.htm#start
+alert(decodeURIComponent(uri));
+```
+
+这里，变量 uri 包含着一个由 encodeURIComponent() 编码的字符串。在第一次调用 decodeURI()输出的结果中，只有 %20 被替换成了空格。而在第二次调用 decodeURIComponent() 输出的结果中，所有特殊字符的编码都被替换成了原来的字符，得到了一个未经转义的字符串（但这个字符串并不是一个有效的 URI）。
+
+**eval() 方法**
+
+ eval()方法就像是一个完整的 ECMAScript 解析器，它只接受一个参数，即要执行的 ECMAScript字符串。
+
+```js
+eval("alert('hi')");
+```
+
+这行代码的作用等价于下面这行代码：
+
+```js
+alert("hi");
+```
+
+当解析器发现代码中调用 eval() 方法时，它会将传入的参数当作实际的 ECMAScript 语句来解析，然后把执行结果插入到原位置。通过 eval() 执行的代码被认为是包含该次调用的执行环境的一部分，因此被执行的代码具有与该执行环境相同的作用域链。
+
+### Math
+
+* min()/max()
+* Math.ceil() 执行向上舍入，即它总是将数值向上舍入为最接近的整数
+* Math.floor() 执行向下舍入，即它总是将数值向下舍入为最接近的整数
+* Math.round() 执行标准舍入，即它总是将数值四舍五入为最接近的整数
+* Math.random() 方法返回大于等于 0 小于 1 的一个随机数。
+* Math.abs(num)返回 num 的绝对值
+* Math.exp(num)返回 Math.E 的 num 次幂
+* Math.log(num)返回 num 的自然对数
+* Math.pow(num,power)返回 num 的 power 次幂
+* Math.sqrt(num)返回 num 的平方根
+

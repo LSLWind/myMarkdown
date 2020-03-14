@@ -497,6 +497,12 @@ nohup command > myout.file 2>&1 &
 
  2>&1 是将标准出错重定向到标准输出，这里的标准输出已经重定向到了out.file文件，即将标准出错也输出到out.file文件中。
 
+#### 杀死nohup进程
+
+使用ps ux查看进程
+
+使用kill -9 PID杀死进程
+
 ## I/O管理类
 
 ### 输入输出重定向操作符
@@ -523,3 +529,11 @@ cat <<EOF >newFile
 
 |用来连接多个命令，将一条命令的输出作为另一条命令的输入
 
+### 远程发送
+
+使用sz与rz
+
+- sz中的s意为send（发送），告诉客户端，我（服务器）要发送文件 send to cilent，就等同于客户端在下载。
+- rz中的r意为received（接收），告诉客户端，我（服务器）要接收文件 received by cilent，就等同于客户端在上传。
+
+ 记住一点，不论是send还是received，**动作都是在服务器上发起的**。

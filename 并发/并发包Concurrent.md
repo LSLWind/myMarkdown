@@ -6,13 +6,9 @@
 if(!vector.contains(element))vector.add(element);
 ```
 
-synchronized相当于java内置的互斥锁，
+上述代码就有可能导致add两个element
 
-
-
-### 并发包concurrent
-
-#### 接口Lock
+### 接口Lock
 
 Lock的用法为
 
@@ -27,9 +23,9 @@ try {
 
 Lock内部只有6个方法，其中获取锁lock()与释放锁unlock()最常用，都是非static void方法。
 
-        并发包java.util.concurrent.locks提供了多种实现该接口的锁，但是其内部本身并没有使用synchronized上锁，而是使用CAS将进程加入同步队列，从而锁住代码块(或者说进入临界区/操作临界资源)（场景为多个(实现Runnable的)线程对象要竞争同一块代码块的操作），实现代码块的并发控制访问。
+并发包java.util.concurrent.locks提供了多种实现该接口的锁，但是其内部本身并没有使用synchronized上锁，而是使用CAS将进程加入同步队列，从而锁住代码块(或者说进入临界区/操作临界资源)（场景为多个(实现Runnable的)线程对象要竞争同一块代码块的操作），实现代码块的并发控制访问。
 
-#### 队列同步器(同步器)AbstractQueuedSynchronizer(AQS)
+### 队列同步器(同步器)AbstractQueuedSynchronizer(AQS)
 
 ​        有了接口，就要实现锁，我们通常使用的锁是基于队列同步器实现的，AbstractQueuedSynchronizer是用来构建锁或者其他同步组件的基础框架，它使用了一个int成员变量表示同步状态，通过内置的FIFO队列来完成资源获取线程的排队工作。简而言之，同步器是给锁的构建者准备的，通过继承该类，可以通过重写方法来实现自己想要的锁。
 
@@ -48,7 +44,7 @@ Lock内部只有6个方法，其中获取锁lock()与释放锁unlock()最常用�
 
 锁实现Lock接口，内部维护一个Sync,该类继承自AbstractQueuedSynchronizer，而AQS主要目的是维护队列及队列中的线程状态。
 
-##### 独占式获取锁lock
+### 独占式获取锁lock
 
 使用lock()时：
 
@@ -254,7 +250,7 @@ final boolean acquireQueued(final Node node, int arg) {
 
         可以看到AQS内部大量使用CAS操作控制state，head，tail，通过维护state状态值（锁）管理线程出入队列，队列是双向链表，对象是内部维护的Node，Node与当前线程绑定，在逻辑上完成了锁的功能（代码块的并发控制）。对线程的挂起及唤醒操作是通过使用 UNSAFE 类调用 JNI 方法实现的。当然，还提供了挂起指定时间后唤醒的 API。同时AQS内部也使用了java.util.concurrent.locks中的LockSupport，LockSupport中只有static方法，与当前线程绑定，可调用park()与unpark()阻塞/唤醒线程。
 
-##### 独占式释放锁unlock()
+### 独占式释放锁unlock()
 
 释放锁unlock()的过程为：
 
@@ -278,7 +274,7 @@ protected final boolean tryRelease(int releases){
 
 可以看到可重入锁，需要将状态减为0时才表示当前线程释放锁
 
-##### 共享式同步状态获取与释放
+### 共享式同步状态获取与释放
 
 共享式即多个线程可同时访问公共资源，如读操作
 
@@ -321,7 +317,7 @@ protected final boolean tryRelease(int releases){
     }
 ```
 
-##### 总结
+### 总结
 
 AQS是用于构建锁的基本工具，因此支持共享/独占式，公平/非公平锁结构，而具体实现留给子类（tryAcquire()与tryRelease()留空，让子类实现获取锁的CAS方式，自己实现加入等待队列，不断自旋尝试获取锁的过程），因此有了多种多样的锁，适用于不同的状况之下
 
@@ -334,12 +330,10 @@ AQS是用于构建锁的基本工具，因此支持共享/独占式，公平/非
 5. 头结点拥有同步状态
 6. 内部维护线程队列时使用了挂起/唤醒线程的操作，用到了LockSupport类
 
-##### 使用AQS实现锁Demo
+### 使用AQS实现锁Demo
 
 ```java
 package concurrent;
-
-
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 import java.util.concurrent.locks.Condition;
@@ -464,6 +458,315 @@ public class TwinsLockTest {
 }
 
 ```
+
+## 重入锁ReentrantLock
+
+```java
+01 public class ReenterLock implements Runnable{
+02     public static ReentrantLock lock=new ReentrantLock();
+03     public static int i=0;
+04     @Override
+05     public void run() {
+06         for(int j=0;j＜10000000;j++){
+07             lock.lock();
+08             try{
+09                 i++;
+10             }finally{
+11                 lock.unlock();
+12             }
+13         }
+14     }
+15     public static void main(String[] args) throws InterruptedException {
+16         ReenterLock tl=new ReenterLock();
+17         Thread t1=new Thread(tl);
+18         Thread t2=new Thread(tl);
+19         t1.start();t2.start();
+20         t1.join();t2.join();
+21         System.out.println(i);
+22     }
+23 }
+```
+
+与synchronized相比，重入锁有着显示的操作过程。开发人员必须手动指定何时加锁，何时释放锁。也正因为这样，重入锁对逻辑控制的灵活性要远远好于synchronized。
+
+就重入锁的实现来看，它主要集中在Java层面。在重入锁的实现中，主要包含三个要素：
+
+第一，是原子状态。原子状态使用CAS操作（在第4章进行详细讨论）来存储当前锁的状态，判断锁是否已经被别的线程持有。
+
+第二，是等待队列。所有没有请求到锁的线程，会进入等待队列进行等待。待有线程释放锁后，系统就能从等待队列中唤醒一个线程，继续工作。
+
+第三，是阻塞原语park()和unpark()，用来挂起和恢复线程。没有得到锁的线程将会被挂起。
+
+### 中断响应
+
+对于synchronized来说，如果一个线程在等待锁，那么结果只有两种情况，要么它获得这把锁继续执行，要么它就保持等待。而使用重入锁，则提供另外一种可能，那就是线程可以被中断。也就是在等待锁的过程中，程序可以根据需要取消对锁的请求。中断会释放当前线程的所有锁，在适当情况下可以避免死锁
+
+```java
+01 public class IntLock implements Runnable {
+02     public static ReentrantLock lock1 = new ReentrantLock();
+03     public static ReentrantLock lock2 = new ReentrantLock();
+04     int lock;
+05     /**
+06      * 控制加锁顺序，方便构造死锁
+07      * @param lock
+08      */
+09     public IntLock(int lock) {
+10         this.lock = lock;
+11     }
+12
+13     @Override
+14     public void run() {
+15         try {
+16             if (lock == 1) {
+17                 lock1.lockInterruptibly();
+18                 try{
+19                     Thread.sleep(500);
+20                 }catch(InterruptedException e){}
+21                 lock2.lockInterruptibly();
+22             } else {
+23                 lock2.lockInterruptibly();
+24                 try{
+25                     Thread.sleep(500);
+26                 }catch(InterruptedException e){}
+27                 lock1.lockInterruptibly();
+28             }
+29
+30         } catch (InterruptedException e) {
+31             e.printStackTrace();
+32         } finally {
+33             if (lock1.isHeldByCurrentThread())
+34                 lock1.unlock();
+35             if (lock2.isHeldByCurrentThread())
+36                 lock2.unlock();
+37             System.out.println(Thread.currentThread().getId()+":线程退出");
+38         }
+39     }
+40
+41     public static void main(String[] args) throws InterruptedException {
+42         IntLock r1 = new IntLock(1);
+43         IntLock r2 = new IntLock(2);
+44         Thread t1 = new Thread(r1);
+45         Thread t2 = new Thread(r2);
+46         t1.start();t2.start();
+47         Thread.sleep(1000);
+48         //中断其中一个线程
+49         t2.interrupt();
+50     }
+51 }
+```
+
+线程t1和t2启动后，t1先占用lock1，再占用lock2；t2先占用lock2，再请求lock1。因此，很容易形成t1和t2之间的相互等待。在这里，对锁的请求，统一使用lockInterruptibly()方法。这是一个可以对中断进行响应的锁申请动作，即在等待锁的过程中，可以响应中断。
+
+在代码第47行，主线程main处于休眠，此时，这两个线程处于死锁的状态，在代码第49行，由于t2线程被中断，故t2会放弃对lock1的申请，同时释放已获得lock2。这个操作导致t1线程可以顺利得到lock2而继续执行下去。
+
+### 锁申请等待限时
+
+除了等待外部通知之外，要避免死锁还有另外一种方法，那就是限时等待。依然以约朋友打球为例，如果朋友迟迟不来，又无法联系到他。那么，在等待1～2个小时后，我想大部分人都会扫兴离去。对线程来说也是这样。通常，我们无法判断为什么一个线程迟迟拿不到锁。也许是因为死锁了，也许是因为产生了饥饿。但如果给定一个等待时间，让线程自动放弃，那么对系统来说是有意义的。我们可以使用tryLock()方法进行一次限时的等待。
+
+下面这段代码展示了限时等待锁的使用。
+
+```java
+01 public class TimeLock implements Runnable{
+02     public static ReentrantLock lock=new ReentrantLock();
+03     @Override
+04     public void run() {
+05         try {
+06             if(lock.tryLock(5, TimeUnit.SECONDS)){
+07                 Thread.sleep(6000);
+08             }else{
+09                 System.out.println("get lock failed");
+10             }
+11         } catch (InterruptedException e) {
+12             e.printStackTrace();
+13         }finally{if(lock.isHeldByCurrentThread()) lock.unlock();}
+14     }
+15     public static void main(String[] args) {
+16         TimeLock tl=new TimeLock();
+17         Thread t1=new Thread(tl);
+18         Thread t2=new Thread(tl);
+19         t1.start();
+20         t2.start();
+21     }
+22 }
+```
+
+在这里，tryLock()方法接收两个参数，一个表示等待时长，另外一个表示计时单位。这里的单位设置为秒，时长为5，表示线程在这个锁请求中，最多等待5秒。如果超过5秒还没有得到锁，就会返回false。如果成功获得锁，则返回true。
+
+在本例中，由于占用锁的线程会持有锁长达6秒，故另一个线程无法在5秒的等待时间内获得锁，因此，请求锁会失败。
+
+ReentrantLock.tryLock()方法也可以不带参数直接运行。在这种情况下，当前线程会尝试获得锁，如果锁并未被其他线程占用，则申请锁会成功，并立即返回true。如果锁被其他线程占用，则当前线程不会进行等待，而是立即返回false。这种模式不会引起线程等待，因此也不会产生死锁。下面演示了这种使用方式：
+
+```java
+01 public class TryLock implements Runnable {
+02     public static ReentrantLock lock1 = new ReentrantLock();
+03     public static ReentrantLock lock2 = new ReentrantLock();
+04     int lock;
+05
+06     public TryLock(int lock) {
+07         this.lock = lock;
+08     }
+09
+10     @Override
+11     public void run() {
+12         if (lock == 1) {
+13             while (true) {
+14                 if (lock1.tryLock()) {
+15                     try {
+16                         try {
+17                             Thread.sleep(500);
+18                         } catch (InterruptedException e) {
+19                         }
+20                         if (lock2.tryLock()) {
+21                             try {
+22                                 System.out.println(Thread.currentThread()
+23                                         .getId() + ":My Job done");
+24                                 return;
+25                             } finally {
+26                                 lock2.unlock();
+27                             }
+28                         }
+29                     } finally {
+30                         lock1.unlock();
+31                     }
+32                 }
+33             }
+34         } else {
+35             while (true) {
+36                 if (lock2.tryLock()) {
+37                     try {
+38                         try {
+39                             Thread.sleep(500);
+40                         } catch (InterruptedException e) {
+41                         }
+42                         if (lock1.tryLock()) {
+43                             try {
+44                                 System.out.println(Thread.currentThread()
+45                                         .getId() + ":My Job done");
+46                                 return;
+47                             } finally {
+48                                 lock1.unlock();
+49                             }
+50                         }
+51                     } finally {
+52                         lock2.unlock();
+53                     }
+54                 }
+55             }
+56         }
+57     }
+58
+59     public static void main(String[] args) throws InterruptedException {
+60         TryLock r1 = new TryLock(1);
+61         TryLock r2 = new TryLock(2);
+62         Thread t1 = new Thread(r1);
+63         Thread t2 = new Thread(r2);
+64         t1.start();
+65         t2.start();
+66     }
+67 }
+```
+
+上述代码中，采用了非常容易死锁的加锁顺序。也就是先让t1获得lock1，再让t2获得lock2，接着做反向请求，让t1申请lock2，t2申请lock1。在一般情况下，这会导致t1和t2相互等待，从而引起死锁。
+
+但是使用tryLock()后，这种情况就大大改善了。由于线程不会傻傻地等待，而是不停地尝试，因此，只要执行足够长的时间，线程总是会得到所有需要的资源，从而正常执行（这里以线程同时获得lock1和lock2两把锁，作为其可以正常执行的条件）。在同时获得lock1和lock2后，线程就打印出标志着任务完成的信息“My Job done”。
+
+### 公平锁
+
+在大多数情况下，锁的申请都是非公平的。也就是说，线程1首先请求了锁A，接着线程2也请求了锁A。那么当锁A可用时，是线程1可以获得锁还是线程2可以获得锁呢？这是不一定的。系统只是会从这个锁的等待队列中随机挑选一个。因此不能保证其公平性。这就好比买票不排队，大家都乱哄哄得围在售票窗口前，售票员忙得焦头烂额，也顾不及谁先谁后，随便找个人出票就完事了。而公平的锁，则不是这样，它会按照时间的先后顺序，保证先到者先得，后到者后得。**公平锁的一大特点是：它不会产生饥饿现象。**只要你排队，最终还是可以等到资源的。如果我们使用synchronized关键字进行锁控制，那么产生的锁就是非公平的。而重入锁允许我们对其公平性进行设置。它有一个如下的构造函数：
+
+```java
+public ReentrantLock(boolean fair)
+```
+
+当参数fair为true时，表示锁是公平的。公平锁看起来很优美，但是要实现公平锁必然要求系统维护一个有序队列，因此公平锁的实现成本比较高，性能相对也非常低下，因此，默认情况下，锁是非公平的。如果没有特别的需求，也不需要使用公平锁。公平锁和非公平锁在线程调度表现上也是非常不一样的。下面的代码可以很好地突出公平锁的特点：
+
+```java
+01 public class FairLock implements Runnable {
+02     public static ReentrantLock fairLock = new ReentrantLock(true);
+03
+04     @Override
+05     public void run() {
+06         while(true){
+07         try{
+08             fairLock.lock();
+09             System.out.println(Thread.currentThread().getName()+" 获得锁");
+10         }finally{
+11             fairLock.unlock();
+12         }
+13         }
+14     }
+15
+16     public static void main(String[] args) throws InterruptedException {
+17         FairLock r1 = new FairLock();
+18         Thread t1=new Thread(r1,"Thread_t1");
+19         Thread t2=new Thread(r1,"Thread_t2");
+20         t1.start();t2.start();
+21     }
+22 }
+```
+
+### 常用方法
+
+对上面ReentrantLock的几个重要方法整理如下。
+
+- lock()：获得锁，如果锁已经被占用，则等待。
+- lockInterruptibly()：获得锁，但优先响应中断。
+- tryLock()：尝试获得锁，如果成功，返回true，失败返回false。该方法不等待，立即返回。
+- tryLock(long time, TimeUnit unit)：在给定时间内尝试获得锁。
+- unlock()：释放锁。
+
+## Condition条件
+
+如果大家理解了Object.wait()和Object.notify()方法的话，那么就能很容易地理解Condition对象了。它和wait()和notify()方法的作用是大致相同的。但是wait()和notify()方法是和synchronized关键字合作使用的，而Condtion是与重入锁相关联的。通过Lock接口（重入锁就实现了这一接口）的Condition newCondition()方法可以生成一个与当前重入锁绑定的Condition实例。利用Condition对象，我们就可以让线程在合适的时间等待，或者在某一个特定的时刻得到通知，继续执行。
+
+Condition接口提供的基本方法如下：
+
+```java
+void await() throws InterruptedException;
+void awaitUninterruptibly();
+long awaitNanos(long nanosTimeout) throws InterruptedException;
+boolean await(long time, TimeUnit unit) throws InterruptedException;
+boolean awaitUntil(Date deadline) throws InterruptedException;
+void signal();
+void signalAll();
+```
+
+以上方法的含义如下：
+
+- await()方法会使当前线程等待，同时释放当前锁，当其他线程中使用signal()或者signalAll()方法时，线程会重新获得锁并继续执行。或者当线程被中断时，也能跳出等待。这和Object.wait()方法很相似。
+- awaitUninterruptibly()方法与await()方法基本相同，但是它并不会在等待过程中响应中断。
+- singal()方法用于唤醒一个在等待中的线程。相对的singalAll()方法会唤醒所有在等待中的线程。这和Obejct.notify()方法很类似。
+
+```java
+01 public class ReenterLockCondition implements Runnable{
+02     public static ReentrantLock lock=new ReentrantLock();
+03     public static Condition condition = lock.newCondition();
+04     @Override
+05     public void run() {
+06         try {
+07             lock.lock();
+08             condition.await();
+09             System.out.println("Thread is going on");
+10         } catch (InterruptedException e) {
+11             e.printStackTrace();
+12         }finally{
+13             lock.unlock();
+14         }
+15     }
+16     public static void main(String[] args) throws InterruptedException {
+17         ReenterLockCondition tl=new ReenterLockCondition();
+18         Thread t1=new Thread(tl);
+19         t1.start();
+20         Thread.sleep(2000);
+21         //通知线程t1继续执行
+22         lock.lock();
+23         condition.signal();
+24         lock.unlock();
+25     }
+26 }
+```
+
+
 
 ### 辅助类CountDownLatch
 

@@ -1,3 +1,5 @@
+表情：https://www.webfx.com/tools/emoji-cheat-sheet/
+
 # 一、公式使用参考
 
 ## 1．如何插入公式

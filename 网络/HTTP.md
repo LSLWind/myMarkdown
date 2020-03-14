@@ -105,6 +105,32 @@ Welcome to Brainy Software
 - **500 Internal Server Error** ：服务器正在执行请求时发生错误。
 - **503 Service Unavailable** ：服务器暂时处于超负载或正在进行停机维护，现在无法处理请求。
 
+### HTTP传输类型Content-Type
+
+Content-Type位于headers中，用于指明报文传递的内容的数据类型
+
+**multipart/form-data** 
+
+它会将表单的数据处理为一条消息，以标签为单元，用分隔符分开。既可以上传键值对，也可以上传文件。当上传的字段是文件时，会有Content-Type来说明文件类型；content-disposition，用来说明字段的一些信息；
+
+由于有boundary隔离，所以multipart/form-data既可以上传文件，也可以上传键值对，它采用了键值对的方式，所以可以上传多个文件。
+
+**x-www-form-urlencoded**
+
+就是application/x-www-from-urlencoded,会将表单内的数据转换为键值对，比如,name=java&age = 23
+
+**raw**
+
+可以上传任意格式的文本，可以上传text、json、xml、html等
+
+**binary**
+
+相当于Content-Type:application/octet-stream,从字面意思得知，只可以上传二进制数据，通常用来上传文件，由于没有键值，所以，一次只能上传一个文件。
+
+**multipart/form-data与x-www-form-urlencoded区别**
+
+multipart/form-data：既可以上传文件等二进制数据，也可以上传表单键值对，只是最后会转化为一条信息；   x-www-form-urlencoded：只能上传键值对，并且键值对都是间隔分开的。
+
 ## Cookie
 
 HTTP 协议是无状态的，主要是为了让 HTTP 协议尽可能简单，使得它能够处理大量事务。HTTP/1.1 引入 Cookie 来保存状态信息。
@@ -205,3 +231,4 @@ Session 可以存储在服务器上的文件、数据库或者内存中。也可
 - Cookie 只能存储 ASCII 码字符串，而 Session 则可以存储任何类型的数据，因此在考虑数据复杂性时首选 Session；
 - Cookie 存储在浏览器中，容易被恶意查看。如果非要将一些隐私数据存在 Cookie 中，可以将 Cookie 值进行加密，然后在服务器进行解密；
 - 对于大型网站，如果用户所有的信息都存储在 Session 中，那么开销是非常大的，因此不建议将所有的用户信息都存储到 Session 中。
+

@@ -351,13 +351,23 @@ int totalPages() // number of total pages in the table
 
 @Modifying 以通知 SpringData， 这是一个 UPDATE 或 DELETE 操作
 
+### 插入
+
+使用save()方法进行插入
+
 ## 基于注解的查询
 
 ### @Query
 
 声明在DAO接口的方法上，传递一个SQL语句
 
-<img src="https://i.loli.net/2020/02/24/LZWhjlDY7fMsREU.png" alt="image.png" style="zoom:80%;" />
+```java
+@Repository
+public interface ExpressDao extends JpaRepository<Express,Long> {
+    @Query("SELECT e.id,e.status from Express e where e.id = ?1")
+    Express findById(long id);
+}
+```
 
 <img src="https://i.loli.net/2020/02/24/yUYTlJhIHNAbk38.png" alt="image.png" style="zoom:80%;" />
 
@@ -389,7 +399,7 @@ int totalPages() // number of total pages in the table
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Table {
-    String name() default "";//表明，可选
+    String name() default "";//表名，可选
     String catalog() default "";
     String schema() default "";//所在的schema，可选
     UniqueConstraint[] uniqueConstraints() default {};
@@ -455,7 +465,7 @@ public @interface Column {
 
 @JoinColumns定义多个字段的关联关系。@JoinColumn需要配合@OneToOne、@ManyToOne、@OneToMany一起使用，单独使用没有意义。
 
-### @OneToOne
+#### @OneToOne
 
 @OneToOne需要配合@JoinColumn一起使用。注意：可以双向关联，也可以只配置一方，需要视实际需求而定。
 
@@ -581,6 +591,34 @@ article 表(id，title，conten，**author_id**)
 
 author 表(**id**，name)
 
+需要注意的是，上述写法一定会导致循环引用问题，最终导致StackOverflow，因为序列化对象时两者是相互关联的，A包含B，B包含A，最终导致循环，解决办法是序列化时忽略掉某些属性。
+
+@JsonIgnoreProperties 用在字段上，指定某些属性被忽略，如
+
+```java
+@OneToMany(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+@OrderBy(value = "order_item_id")
+@Fetch(FetchMode.JOIN)
+@JsonIgnoreProperties("salesOrder")
+private List<SalesOrderItem> salesOrderItems;
+```
+
+```java
+@ManyToOne
+@JoinColumn(name = "order_id")
+@JsonIgnoreProperties("salesOrderItems")
+private SalesOrder salesOrder;
+```
+
+或者使用fastjson中的@JSONField
+
+```java
+@OneToMany(mappedBy = "express",cascade= CascadeType.ALL,fetch= FetchType.LAZY)
+@OrderBy("time")
+@JSONField(serialize = false)
+private List<PackageHistory> packageHistoryList;
+```
+
 #### @OrderBy
 
 @OrderBy关联查询时排序，一般和@OneToMany一起使用。
@@ -654,11 +692,36 @@ public class Authority {
 }
 ```
 
+## 高级查询
+
+从JpaRepository开始的子类，都是Spring Data项目对JPA实现的封装与扩展。JpaRepository本身继承
+PagingAndSortingRepository接口，是针对JPA技术的接口，提供flush()、saveAndFlush()、deleteInBatch()、deleteAllInBatch()等方法。它的实现类和子类，又提供了一些非常优雅的方法
+
+### QueryByExampleExecutor
+
+```java
+public interface QueryByExampleExecutor<T> {
+    <S extends T> Optional<S> findOne(Example<S> var1);
+
+    <S extends T> Iterable<S> findAll(Example<S> var1);
+
+    <S extends T> Iterable<S> findAll(Example<S> var1, Sort var2);
+
+    <S extends T> Page<S> findAll(Example<S> var1, Pageable var2);
+
+    <S extends T> long count(Example<S> var1);
+
+    <S extends T> boolean exists(Example<S> var1);
+}
+```
+
+
+
 
 
  ## 常见问题
 
-'Sort(org.springframework.data.domain.Sort.Direction, java.util.List<java.lang.String>)' has private access in 'org.springframework.data.domain.Sort'
+**'Sort(org.springframework.data.domain.Sort.Direction, java.util.List<java.lang.String>)' has private access in 'org.springframework.data.domain.Sort'****
 
 构造方法已经变成了私有的，因此不能直接构造Sort了，可以使用Sort.by
 
@@ -675,15 +738,32 @@ public class Authority {
 
 
 
-type类型错误
+**type类型错误**
 
 对于已经继承的接口的方法不能重复定义，典型的如findAll
 
 
 
-Can not set int field org.entity.contracts.contract_owner_id to null value
+**Can not set int field org.entity.contracts.contract_owner_id to null value**
 
 原始数据类型不能为null，因此如果有映射为空的字段应该将其设置为对应的包装类，如int换位Integer
 
  
 
+**Can't resolve column 'xxx'**
+
+在使用@OneToMany时出现了该问题，因为JPA的解决方案中，使用外键关联实体关系，因此要检测配置是否正确必须指定已经配置好的数据源，然后才能检测是否正确。
+
+进入Assign Data Sources弹出框中，如果已经配置了数据源，点击DataSource选择一个即可，否则要配置一个数据库连接（IDEA）
+
+**could not initialize proxy - no Session**
+
+经常在测试时出现，在进行数据库访问之时，当前针对数据库的访问与操作session已经关闭且释放了，故提示no Session可用
+
+在测试类上加上@Transactional解决
+
+
+
+**org.hibernate.exception.SQLGrammarException: could not extract ResultSet**
+
+SQL语句写错了，一般会报错误提示，需要注意的是类名与表名的映射，数据库中对应的单词间要加上_，如PackageHistory默认映射的表是package_history

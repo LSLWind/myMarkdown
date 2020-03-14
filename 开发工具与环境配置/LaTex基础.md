@@ -180,6 +180,8 @@ LATEX 提供了命令 \include 用来在源代码里插入文件：
 
 ### 字符
 
+#### 空格
+
 LATEX 源代码中，空格键和 Tab 键输入的空白字符视为“空格”。连续的若干个空白字符视为一个空格。一行开头的空格忽略不计。行末的回车视为一个空格；但连续两个回车，也就是空行，会将文字分段。多个空行被视为一个空行。也可以在行末使用 \par 命令分段。
 
 | 两个quad空格 | a \qquad b | ![a \qquad b](http://upload.wikimedia.org/math/e/5/0/e505263bc9c94f673c580f3a36a7f08a.png) | 两个*m*的宽度  |
@@ -442,6 +444,32 @@ Bill Gates& 002& Female\\
 
 \end{document
 
+```
+
+**单元格合并**
+
+```latex
+\documentclass[UTF8]{ctexart}
+\begin{document}
+
+\begin{table}[!htbp]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+\multicolumn{3}{|c|}{学生信息}\\ % 用\multicolumn{3}表示横向合并三列 
+                        % |c|表示居中并且单元格两侧添加竖线 最后是文本
+\hline
+姓名&学号&性别\\
+\hline
+Jack& 001& Male\\
+\hline
+Angela& 002& Female\\
+\hline
+\end{tabular}
+\caption{这是一张三线表}
+\end{table}
+
+\end{document}
 ```
 
 

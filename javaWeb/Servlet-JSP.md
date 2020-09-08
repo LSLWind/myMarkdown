@@ -3,6 +3,11 @@ Java Servlet 是运行在 Web 服务器或应用服务器上的程序
 
 Servlet 可以使用 javax.servlet 和 javax.servlet.http 包创建，它是 Java 企业版的标准组成部分，Java 企业版是支持大型开发项目的 Java 类库的扩展版本，这些类实现 Java Servlet 和 JSP 规范
 
+```
+String jobId= EmployeeSession.getSession().get(token);
+if(jobId==null||jobId.equals(""))return CommonReturnType.createErrorType(EmBusinessError.NO_LOGIN);
+```
+
 #### Servlet 任务
 读取客户端（浏览器）发送的显式的数据。这包括网页上的 HTML 表单，或者也可以是来自 applet 或自定义的 HTTP 客户端程序的表单。
 读取客户端（浏览器）发送的隐式的 HTTP 请求数据。这包括 cookies、媒体类型和浏览器能理解的压缩格式等等。
@@ -540,28 +545,26 @@ HttpSession session = request.getSession();
 你需要在向客户端发送任何文档内容之前调用 request.getSession()。下面总结了 HttpSession 对象中可用的几个重要的方法：
 
 序号	方法 & 描述
-1	public Object getAttribute(String name)
-该方法返回在该 session 会话中具有指定名称的对象，如果没有指定名称的对象，则返回 null。
-2	public Enumeration getAttributeNames()
-该方法返回 String 对象的枚举，String 对象包含所有绑定到该 session 会话的对象的名称。
-3	public long getCreationTime()
-该方法返回该 session 会话被创建的时间，自格林尼治标准时间 1970 年 1 月 1 日午夜算起，以毫秒为单位。
-4	public String getId()
-该方法返回一个包含分配给该 session 会话的唯一标识符的字符串。
-5	public long getLastAccessedTime()
-该方法返回客户端最后一次发送与该 session 会话相关的请求的时间自格林尼治标准时间 1970 年 1 月 1 日午夜算起，以毫秒为单位。
-6	public int getMaxInactiveInterval()
-该方法返回 Servlet 容器在客户端访问时保持 session 会话打开的最大时间间隔，以秒为单位。
-7	public void invalidate()
-该方法指示该 session 会话无效，并解除绑定到它上面的任何对象。
-8	public boolean isNew()
-如果客户端还不知道该 session 会话，或者如果客户选择不参入该 session 会话，则该方法返回 true。
-9	public void removeAttribute(String name)
-该方法将从该 session 会话移除指定名称的对象。
-10	public void setAttribute(String name, Object value) 
-该方法使用指定的名称绑定一个对象到该 session 会话。
-11	public void setMaxInactiveInterval(int interval)
-该方法在 Servlet 容器指示该 session 会话无效之前，指定客户端请求之间的时间，以秒为单位。
+
+* public Object getAttribute(String name)：该方法返回在该 session 会话中具有指定名称的对象，如果没有指定名称的对象，则返回 null。
+* public Enumeration getAttributeNames()
+  该方法返回 String 对象的枚举，String 对象包含所有绑定到该 session 会话的对象的名称。
+* public long getCreationTime()：该方法返回该 session 会话被创建的时间，自格林尼治标准时间 1970 年 1 月 1 日午夜算起，以毫秒为单位。
+  4	public String getId()
+  该方法返回一个包含分配给该 session 会话的唯一标识符的字符串。
+  5	public long getLastAccessedTime()
+  该方法返回客户端最后一次发送与该 session 会话相关的请求的时间自格林尼治标准时间 1970 年 1 月 1 日午夜算起，以毫秒为单位。
+  6	public int getMaxInactiveInterval()
+  该方法返回 Servlet 容器在客户端访问时保持 session 会话打开的最大时间间隔，以秒为单位。
+* public void invalidate()：该方法指示该 session 会话无效，并解除绑定到它上面的任何对象。
+  8	public boolean isNew()
+  如果客户端还不知道该 session 会话，或者如果客户选择不参入该 session 会话，则该方法返回 true。
+  9	public void removeAttribute(String name)
+  该方法将从该 session 会话移除指定名称的对象。
+  10	public void setAttribute(String name, Object value) 
+  该方法使用指定的名称绑定一个对象到该 session 会话。
+  11	public void setMaxInactiveInterval(int interval)
+  该方法在 Servlet 容器指示该 session 会话无效之前，指定客户端请求之间的时间，以秒为单位。
 
 ```java
 @WebServlet("/SessionTrack")
@@ -793,6 +796,25 @@ Servlet容器默认是采用单实例多线程的方式处理多个请求的：
 　　第三：Servlet容器并不关心到达的Servlet请求访问的是否是同一个Servlet还是另一个Servlet，直接分配给它一个新的线程；　　　　　　如果是同一个Servlet的多个请求，那么Servlet的service方法将在多线程中并发的执行；
 　　第四：每一个请求由ServletRequest对象来接受请求，由ServletResponse对象来响应该请求；
 ```
+
+## 服务器操作
+
+### 重定向与转发
+
+**内部重定向forward()**
+
+```java
+RequestDispatcher rd = request.getRequestDispatcher("wel.jsp");
+rd.forward(request, response);
+```
+
+**转发redirect**
+
+```
+response.sendRedirect("wel.jsp");
+```
+
+
 
 #### JSP概述
 

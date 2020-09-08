@@ -55,6 +55,12 @@ if (someNode.nodeType == 1){ // 适用于所有浏览器
 
 并不是所有节点类型都受到 Web 浏览器的支持。开发人员最常用的就是元素和文本节点。
 
+在 DOM 中，每种成分都是节点。元素节点没有文本值。
+
+元素节点的文本存储在子节点中。该节点称为文本节点。
+
+改变元素文本的方法，就是改变这个子节点（文本节点）的值。
+
 ### 节点关系
 
 文档中所有的节点之间都存在这样或那样的关系。节点间的各种关系可以用传统的家族关系来描述，相当于把文档树比喻成家谱。在 HTML 中，可以将 <body\> 元素看成是 <html\> 元素的子元素；相应地，也就可以将 <html\> 元素看成是 <body\> 元素的父元素。而 <head\> 元素，则可以看成是 <body\> 元素的同胞元素，因为它们都是同一个父元素 <html\> 的直接子元素。
@@ -102,3 +108,60 @@ alert(returnedNode == someNode.lastChild); //true
 
 ### Document 类型
 JavaScript 通过 Document 类型表示文档。在浏览器中， document 对象是 HTMLDocument （继承自 Document 类型）的一个实例，表示整个 HTML 页面。而且， document 对象是 window 对象的一个属性，因此可以将其作为全局对象来访问。 
+
+## 常用方法
+
+### 元素节点方法
+
+**删除元素节点**
+
+DOM 需要清楚您需要删除的元素，以及它的父元素。常用的解决方案：找到您希望删除的子元素，然后使用其 parentNode 属性来找到父元素：
+
+```js
+var child=document.getElementById("p1");
+child.parentNode.removeChild(child);
+```
+
+**插入元素节点**
+
+```js
+node.parentNode.insertBefore(新添加节点，参照节点);//node.parentNode是节点的父节点
+```
+
+**更新元素节点内容**
+
+直接变更html文本
+
+```js
+element.innerHTML='xxx';
+```
+
+## 常用操作
+
+### 操控输入框
+
+**获取输入框的值**
+
+==document.getElementById("account").value==
+
+```js
+<h1>登录</h1>
+<small>本网页展示了使用HTML DOM来访问HTML元素最常用的方法</small>
+<hr/>
+ 
+Account &nbsp;<input type="text" id="account" value="15515"><br/>
+Password <input type="password" id="pwd" value="123456"><br/>
+<input type="button" value="Show Values" onclick="getValue()">
+<hr/>
+<p id="show"></p>
+ 
+<script>
+    var a = document.getElementById("account").value;
+    var p = document.getElementById("pwd").value;
+    function getValue() {
+        document.getElementById("show").innerHTML = "Account: " + a + "<br/>" + "Password: " + p;
+    }
+```
+
+
+

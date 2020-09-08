@@ -280,7 +280,7 @@ public interface UserDao extends JpaRepository<User,Long> {
 * 存在：exists
 * 删除：delete,remove
 
-**delete方法没有返回值，如果删除失败则会抛出EmptyResultDataAccessException异常****
+**delete方法没有返回值，如果删除失败则会抛出EmptyResultDataAccessException异常**
 
 **对于delete 与 update 方法，要使用@Modifying进行修饰**
 
@@ -381,6 +381,13 @@ public interface ExpressDao extends JpaRepository<Express,Long> {
 
 <img src="https://i.loli.net/2020/02/24/ytD41I5RPcbuNUg.png" alt="image.png" style="zoom:80%;" />
 
+**传入参数是对象**
+
+```java
+@Query("update HsAlbum album set album.albumName = :#{#hsAlbum.albumName} ,album.description = :#{#hsAlbum.description } ")
+public int update(HsAlbum hsAlbum);
+```
+
 ### @Param
 
 默认情况下，参数是通过顺序绑定在查询语句上的。这使得查询方法对参数位置的重构容易出错。为了解决这个问题，可以使用@Param注解指定方法参数的具体名称，通过绑定的参数名字做查询条件。
@@ -424,6 +431,14 @@ public @interface GeneratedValue {
 ```
 
 默认是自动选择最佳生成策略
+
+**自增主键上要加上**
+
+```java
+@GeneratedValue(strategy= GenerationType.IDENTITY)
+```
+
+否则会报错
 
 ### @Basic
 @Basic表示属性是到数据库表的字段的映射。如果实体的字段上没有任何注解，默认即为@Basic。
@@ -580,9 +595,10 @@ public class Article {
     private String content;//文章全文内容
     
     @ManyToOne(cascade={CascadeType.MERGE,CascadeType.REFRESH},optional=false)//可选属性optional=false,表示author不能为空。删除文章，不影响用户
-    @JoinColumn(name="author_id")//设置在article表中的关联字段(外键)
+    @JoinColumn(name="author")//
     private Author author;//所属作者
 }
+git remote add origin "https://gitee.com/LSLWIND/aladdin-client"
 ```
 
 最终生成的表结构
@@ -591,7 +607,9 @@ article 表(id，title，conten，**author_id**)
 
 author 表(**id**，name)
 
-需要注意的是，上述写法一定会导致循环引用问题，最终导致StackOverflow，因为序列化对象时两者是相互关联的，A包含B，B包含A，最终导致循环，解决办法是序列化时忽略掉某些属性。
+==需要注意的是，上述写法一定会导致循环引用问题，最终导致StackOverflow，因为序列化对象时两者是相互关联的，A包含B，B包含A，最终导致循环，解决办法是序列化时忽略掉某些属性。==
+
+**首先要禁用lombok的@Data，使用@Data注释后，默认会重写父类的toString()方法，hashcode()等方法，在往map里存的时候，会根据equals和hashcode方法，来计算下标，而如果@Data注释的类与其他类有关联的属性（如：@onetoone,@onetomany等）且关联的属性不为空时，会不断从关联方的属性进行查找，再从关联方查找该@Data注释的类，依次循环，造成堆栈溢出。**
 
 @JsonIgnoreProperties 用在字段上，指定某些属性被忽略，如
 
@@ -741,6 +759,14 @@ public interface QueryByExampleExecutor<T> {
 **type类型错误**
 
 对于已经继承的接口的方法不能重复定义，典型的如findAll
+
+### 不可以生成ids
+
+常见原因是使用了自增主键，在主键字段上加上注解即可
+
+```java
+@GeneratedValue(strategy=GenerationType.IDENTITY)
+```
 
 
 

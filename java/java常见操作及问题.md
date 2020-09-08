@@ -26,6 +26,14 @@ List<String> list=new Arraylist<>(set);
 list.addAll(set);
 ```
 
+**Set转数组**
+
+```
+ String[] array = set.toArray(new String[testList.size()]);
+```
+
+
+
 ##### List转数组
 
 使用toArray()方法，参数为数组对象

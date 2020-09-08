@@ -97,13 +97,11 @@ public class WebSocketConfig  {
     public ServerEndpointExporter serverEndpointExporter() {
         return new ServerEndpointExporter();
     }
-
- 
-
     @Bean
     public MySpringConfigurator mySpringConfigurator() {
         return new MySpringConfigurator();
     }
+
 }
 /**
  *  以websocketConfig.java注册的bean是由自己管理的，需要使用配置托管给spring管理
@@ -144,3 +142,18 @@ public class WebSocketServer {
 
 }
 前端页面网上很多，这里不放了。
+
+
+
+
+
+
+
+
+
+揽收任务 ， 预约后分配当前网点员工揽收任务
+
+转运任务 ，  打包后分配到当前网点员工转运任务
+
+派送任务，拆包后已到达目的地分配当前员工派送任务  
+

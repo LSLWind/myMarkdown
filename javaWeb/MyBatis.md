@@ -61,7 +61,7 @@ public interface BlogMapper {
 
 1 #是将传入的值当做字符串的形式，eg:select id,name,age from student where id =#{id},当前端把id值1，传入到后台的时候，就相当于 select id,name,age from student where id ='1'.
 
- 2 $是将传入的数据直接显示生成sql语句，eg:select id,name,age from student where id =${id},当前端把id值1，传入到后台的时候，就相当于 select id,name,age from student where id = 1.
+ 2 \$是将传入的数据直接显示生成sql语句，eg:select id,name,age from student where id =${id},当前端把id值1，传入到后台的时候，就相当于 select id,name,age from student where id = 1.
 
  3 使用#可以很大程度上防止sql注入。(语句的拼接)
 
@@ -450,7 +450,7 @@ Parameters: 1(Integer)
 
 #### #{}与${}的区别
 
-、使用${}方式传入的参数，mybatis不会对它进行特殊处理，而使用#{}传进来的参数，mybatis默认会将其当成字符串。可能在赋值给如id=#{id}和id=${id}看不出多大区别，但是作为表名或字段参数时可以明显看出，可以看看下面的例子：
+、使用\${}方式传入的参数，mybatis不会对它进行特殊处理，而使用#{}传进来的参数，mybatis默认会将其当成字符串。可能在赋值给如id=#{id}和id=${id}看不出多大区别，但是作为表名或字段参数时可以明显看出，可以看看下面的例子：
 假设传入的参数为表名test
 selec * from #{table};
 

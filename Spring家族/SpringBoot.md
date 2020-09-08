@@ -532,11 +532,63 @@ jdbcTemplate是Spring对JDBC的进一步封装，使用时只需要在applicatio
     JdbcTemplate jdbcTemplate;
 ```
 
-### 日志
+## 访问静态资源
+
+SpringBoot会在resources/static目录下扫描静态资源文件，如图片。访问静态资源要导入依赖
+
+```xml
+        <dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+```
+
+目录resources/static/img/x.png就等于访问http://127.0.0.1:8080/img/x.png
+
+Spring Boot默认将所有的静态资源映射到以下目录
+
+```
+classpath:/static 
+classpath:/public 
+classpath:/resources 
+classpath:/META-INF/resources
+```
+
+优先级为优先级`/META-INF/resources/>/resources/>/static/>/public/`
+
+### 静态资源不更新
+
+国外人员为了方便开发,Springboot启动的时候默认启动了一个服务:LiveReload。这东西干嘛用的呢,就是网页连刷新都不用刷新了,资源文件一更新直接显示在页面上了,但是这个东西呢,需要去Chrome浏览器的插件商店装个插件...不FQ是没法装的...所以在国外是个非常方便的东西,在国内就成了好多人用不了的不知名东西...
+
+然后thymeleaf模板引擎默认开启了静态文件缓存,加快了访问速度,国外有LiveReload这个东西监听资源文件,可以实时更新了以后reload项目,显示在页面上,
+
+但是国内没有啊,更新的静态文件就被thymeleaf缓存了,除非完全重启项目才能把项目缓存释放,否则就一直在缓存里面,就造成了不更新的现象了...
+
+解决方法就是**在application.yml(或者是你的配置文件里),把thymeleaf的缓存关闭**
+
+```
+spring.thymeleaf.cache=false
+```
+
+## 日志
 
 SprinbBoot整合日志很容易，内部有自己的日志Logback，但整合其他日志也非常容易
 
-##### 配置
+### LogBack
+
+**调整控制台输出日志为DEBUG级别**
+
+默认情况下，SpringBoot只会在控制台输出 `INFO`及以上级别（`WARN`、`ERROR`）的日志。如果你想输出 `DEBUG`级别的日志，可以通过以下两种方法：
+
+1. 在运行SpringBoot应用 `jar`包时指定 `--debug`参数：
+
+```
+java -jar myApp.jar --debug
+```
+
+2. 在你的 `application.properties`中添加 `debug=true`
+
+#### 配置
 
 使用默认日志只需要在application.properties中配置日志级别即可，console默认输入ERROR, WARN ，INFO级别的日志。可通过修改logging.level属性来改变日志的输出级别。可以通过配置logging.file属性或logging.path属性将日志输出到文件中。当文件到达10M的时候，将新建一个文件记录日志。
 
@@ -611,7 +663,7 @@ logging.pattern.console= %d{yyyy-MMM-dd HH:mm:ss.SSS} %-5level [%thread] %logger
 
 通过logging.path属性将在根目录下创建concretepage/logs并默认使用spring.log作为文件名。logging.pattern.console是设置console的日志样式
 
-##### 使用
+#### 使用
 
 日志是基于对象的，日志打印一般通过反射获取操控对象信息，在根据内部使用打印日志。以slf4j为例：
 
@@ -631,7 +683,24 @@ public class UtilsTest {
 }
 ```
 
- https://www.jianshu.com/p/1fa12b92d5c4 
+使用lombok可以简化去掉全局logger
+
+```java
+@Slf4j
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class UtilsTest {
+    @Test
+    public void logTest(){
+        log.info("这是一条 info 级别的日志");
+        log.error("这是一条 error 级别的日志");
+        log.debug("这是一条 debug 级别的日志");
+        log.warn("这是一条 warn 级别的日志");
+    }
+}
+```
+
+
 
 ### 使用jsp作为模板
 
@@ -773,6 +842,20 @@ public void configureViewResolvers(ViewResolverRegistry registry) {
     registry.enableContentNegotiation(new MappingJackson2JsonView());
 }
 ```
+
+## 文件传输
+
+### FormData-MultipartFile
+
+前端使用formdata传递数据，后台使用MultipartFile映射，可以直接映射
+
+```java
+    public ReturnType postAudio(@PathVariable long courseId,
+                                @PathVariable long startTime,
+                                MultipartFile multipartFile)
+```
+
+注意名称必须是文件名称才可以映射
 
 ### 使用拦截器
 
@@ -1062,3 +1145,119 @@ public class WebApplication {
 ```
 
 @SpringBootApplication包括@EnableAutoConfiguratio
+
+
+
+
+
+```
+package org.phoenix.aladdin.app.business.controller;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import org.phoenix.aladdin.app.business.viewobject.PackVO;
+import org.phoenix.aladdin.constant.ExpressInfo;
+import org.phoenix.aladdin.controller.BaseController;
+import org.phoenix.aladdin.error.BusinessException;
+import org.phoenix.aladdin.error.EmBusinessError;
+import org.phoenix.aladdin.model.entity.Express;
+import org.phoenix.aladdin.response.CommonReturnType;
+import org.phoenix.aladdin.service.ExpressService;
+import org.phoenix.aladdin.service.PackageService;
+import org.phoenix.aladdin.util.JSONUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+@RestController
+@RequestMapping("/business")
+public class BusinessExpressController extends BaseController {
+
+    @Autowired
+    private ExpressService expressService;
+
+    @Autowired
+    private PackageService packageService;
+    /**
+     * 前端发送请求表示预约已经上门，快件生命周期变更为 预约上门
+     */
+    @RequestMapping("/order/mailingDeal")
+    public CommonReturnType updateMailingDeal(@RequestBody String id,
+                                              HttpServletRequest request,
+                                              HttpSession session) throws BusinessException {
+        if(id==null)throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR);
+        //获取订单id
+        int orderId=Integer.parseInt(JSON.parseObject(id).getString("id"));
+        //更新状态成功
+        if(expressService.updateExpressStatus(orderId, ExpressInfo.EXPRESS_MAILING_DEAL)){
+            return CommonReturnType.create(JSONUtil.oneMessageData("更新状态成功"));
+        }
+        //更新失败
+        return CommonReturnType.create(
+                JSONUtil.oneErrorData(EmBusinessError.SERVER_EXCEPTION_ERROR.getErrMsg()),
+                EmBusinessError.SERVER_EXCEPTION_ERROR.getErrCode());
+    }
+
+    /**
+     * 订单图片上传，使用第三方图床接口sm.ms后上传给服务器一个url
+     **/
+    @RequestMapping("/order/{orderId}/addImg")
+    public CommonReturnType addOrderImg(@PathVariable("orderId")String orderId,
+                                        @RequestBody String imgUrl,
+                                        HttpServletRequest request,
+                                        HttpSession session)throws BusinessException{
+        if(orderId==null||imgUrl==null)throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR);
+        imgUrl=JSON.parseObject(imgUrl).getString("imgUrl");
+
+        if(expressService.insertExpressSendImg(Long.parseLong(orderId),imgUrl)){
+            return CommonReturnType.create(JSONUtil.oneMessageData("上传成功"));
+        }
+
+        return CommonReturnType.create(JSONUtil.oneErrorData("上传失败"),10000);
+    }
+
+
+    /**
+     * 包裹打包，快件/包裹的生命周期变更为 等待出库
+     * 记录历史数据
+     */
+    //TODO mainId并没有进行约束
+    @RequestMapping("/pack")
+    public CommonReturnType packToPackage(@RequestBody PackVO packVO,
+                                 HttpServletRequest request,
+                                 HttpSession session)throws BusinessException{
+        if(packVO==null||
+                (packVO.getPackId()!=null&&packVO.getPassId()!=null))throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR);
+        //将包裹打进最外层包裹，更新状态，记录历史
+        boolean suc;
+        if(packVO.getPackId()!=null){
+            suc=packageService.packToPackage(Long.parseLong(packVO.getPackId())
+                    ,1,Integer.parseInt(packVO.getMainId()));
+            packageService.updatePackageStatusByPackageId(Long.parseLong(packVO.getPackId()),ExpressInfo.PACKAGE_WAIT_START);
+        }else {//将快件打进最外层包裹，更新状态，记录历史
+            suc=packageService.packToPackage(Integer.parseInt(packVO.getPassId())
+                    ,0,Integer.parseInt(packVO.getMainId()));
+            expressService.updateExpressStatus(Integer.parseInt(packVO.getPackId()),ExpressInfo.EXPRESS_WAIT_START);
+        }
+        if(suc)return CommonReturnType.create(JSONUtil.oneMessageData("打包成功"));
+
+        return CommonReturnType.create(JSONUtil.oneErrorData("打包失败，请稍后重试"),
+                10000);
+    }
+
+    /**
+     * 包裹拆包，拆包则表明该包裹中的所有
+     */
+    public CommonReturnType unpackFromPackage(){
+        return null;
+    }
+
+
+}
+```

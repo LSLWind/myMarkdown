@@ -169,6 +169,36 @@ public Audience audience() {
 
 这里，`@Around`注解表明`watchPerformance()`方法会作为`performance()`切点的环绕通知。在这个通知中，观众在演出之前会将手机调至静音并就坐，演出结束后会鼓掌喝彩。像前面一样，如果演出失败的话，观众会要求退款。可以看到，这个通知所达到的效果与之前的前置通知和后置通知是一样的。但是，现在它们位于同一个方法中，不像之前那样分散在四个不同的通知方法里面。
 
+使用环绕通知可以有返回值，用于进行灵活的切面
+
+```java
+    /**
+      * 环绕通知需要携带ProceedingJoinPoint类型的参数
+     * 环绕通知类似于动态代理的全过程：ProceedingJoinPoint类型的参数可以决定是否执行目标方法。
+     * 而且环绕通知必须有返回值，返回值即为目标方法的返回值
+      */
+    @Around("execution(public int com.yl.spring.aop.ArithmeticCalculator.*(..))")
+     public Object aroundMethod(ProceedingJoinPoint pjd) {
+        Object result = null;
+         String methodName = pjd.getSignature().getName();
+        //执行目标方法
+         try {
+            //前置通知
+            System.out.println("The method " + methodName + " begins with " + Arrays.asList(pjd.getArgs()));
+           result = pjd.proceed();
+           //返回通知
+            System.out.println("The method " + methodName + " ends with " + Arrays.asList(pjd.getArgs()));
+        } catch (Throwable e) {
+            //异常通知
+           System.out.println("The method " + methodName + " occurs expection : " + e);
+            throw new RuntimeException(e);
+         }
+         //后置通知
+         System.out.println("The method " + methodName + " ends");
+         return result;
+     }
+```
+
 ### 处理通知中的参数
 
 切面能访问和使用传递给被通知方法的参数吗，看一个样例。`play()`方法会循环所有的磁道并调用`playTrack()`方法。但是，我们也可以通过`playTrack()`方法直接播放某一个磁道中的歌曲。
@@ -177,13 +207,125 @@ public Audience audience() {
 
 为了记录每个磁道所播放的次数，我们创建了`TrackCounter`类，它是通知`playTrack()`方法的一个切面。
 
-<img src="https://s2.ax1x.com/2020/02/17/3C1ROg.png" alt="3C1ROg.png" style="zoom:67%;" />
+<img src="https://s2.ax1x.com/2020/02/17/3C1ROg.png" alt="3C1ROg.png" style="zoom: 80%;" />
+
+**通过"argNames"属性指定参数名。**
+
+```java
+@Before(value="args(param)", argNames="param") //明确指定了 
+public void beforeTest(String param) { 
+    System.out.println("param:" + param); 
+}
+```
 
 **指示器args**
 
 需要关注的是切点表达式中的`args(trackNumber)`限定符。它表明传递给`playTrack()`方法的`int`类型参数也会传递到通知中去。参数的名称`trackNumber`也与切点方法签名中的参数相匹配。
 
 这个参数会传递到通知方法中，这个通知方法是通过`@Before`注解和命名切点`trackPlayed(trackNumber)`定义的。切点定义中的参数与切点方法中的参数名称是一样的，这样就完成了从命名切点到通知方法的参数转移。
+
+### 通过JoinPoint获取参数
+
+Spring AOP提供使用org.aspectj.lang.JoinPoint类型获取连接点数据，任何通知方法的第一个参数都可以是JoinPoint(环绕通知是ProceedingJoinPoint，JoinPoint子类)，当然第一个参数位置也可以是JoinPoint.StaticPart类型，这个只返回连接点的静态部分。
+
+1. `JoinPoint`：提供访问当前被通知方法的目标对象、代理对象、方法参数等数据：
+
+   
+
+   ```java
+   public interface JoinPoint {
+   
+       String toString();                  //连接点所在位置的相关信息  
+       String toShortString();             //连接点所在位置的简短相关信息  
+       String toLongString();              //连接点所在位置的全部相关信息
+       Object getThis();                   //返回AOP代理对象,如果想要使用这个方法的话，最好使用this连接点，这样可以获得最佳的性能。  
+       Object getTarget();                 //返回目标对象,如果想要使用这个方法的话，最好使用target连接点，这样可以获得最佳的性能。
+       Object[] getArgs();                 //返回被通知方法参数列表  
+       Signature getSignature();           //返回当前连接点签名  
+       SourceLocation getSourceLocation(); //返回连接点方法所在类文件中的位置  
+       String getKind();                   //连接点类型  
+       StaticPart getStaticPart();         //返回连接点静态部分  
+   
+       // getKind 方法的返回值
+       static String METHOD_EXECUTION = "method-execution";
+       static String METHOD_CALL = "method-call";
+       static String CONSTRUCTOR_EXECUTION = "constructor-execution";
+       static String CONSTRUCTOR_CALL = "constructor-call";
+       static String FIELD_GET = "field-get";
+       static String FIELD_SET = "field-set";
+       static String STATICINITIALIZATION = "staticinitialization";
+       static String PREINITIALIZATION = "preinitialization";
+       static String INITIALIZATION = "initialization";
+       static String EXCEPTION_HANDLER = "exception-handler";
+       static String SYNCHRONIZATION_LOCK = "lock";
+       static String SYNCHRONIZATION_UNLOCK = "unlock";
+       static String ADVICE_EXECUTION = "adviceexecution"; 
+   }
+   ```
+
+2. `ProceedingJoinPoint`：用于环绕通知，使用`proceed()`方法来执行目标方法：
+
+
+
+```java
+public interface ProceedingJoinPoint extends JoinPoint {  
+    void set$AroundClosure(AroundClosure arc);              // 这是个内部方法，不应该直接调用
+    public Object proceed() throws Throwable;               // 执行目标函数，以默认的参数执行
+    public Object proceed(Object[] args) throws Throwable;  // 执行目标函数，并传入所需的参数
+}  
+```
+
+1. `JoinPoint.StaticPart`：提供访问连接点的静态部分，如被通知方法签名、连接点类型等：
+
+
+
+```java
+public interface StaticPart {
+    Signature getSignature();           // 返回当前连接点签名
+    SourceLocation getSourceLocation(); // 返回连接点所在资源路径
+    String getKind();                   // 连接点类型
+    int getId();                        // 唯一标识 
+    String toString();                  // 连接点所在位置的相关信息
+    String toShortString();             // 连接点所在位置的简短相关信息
+    String toLongString();              // 连接点所在位置的全部相关信息
+}
+```
+
+如果使用该种方式声明参数，必须放到方法第一个位置上，如
+
+
+
+```java
+@Aspect
+@Component
+public class JoinPointAop {
+
+    // 切点范围
+    @Pointcut("execution(* com.learn.service..IJoinPointService+.*(..))")
+    public void pointcut(){ }
+
+    @Before("pointcut()")
+    public void before1(JoinPoint jp) {
+        System.out.println("---------------@Before1----------------");
+        System.out.println(Arrays.toString(jp.getArgs()));
+    }
+
+    @Before("pointcut()")
+    public void before2(JoinPoint.StaticPart jp) {
+        System.out.println("---------------@Before2----------------");
+        System.out.println(jp.getSignature());
+    }
+
+    @Around("pointcut()")
+    public Object around(ProceedingJoinPoint pjp) throws Throwable {
+        System.out.println("---------------@Around----------------");
+        return pjp.proceed();
+    }
+
+}
+```
+
+
 
 ### 使用XML声明AOP
 
@@ -224,3 +366,100 @@ public class Audience {
 使用`<aop:pointcut>`可以复用切点表达式
 
 <img src="https://s2.ax1x.com/2020/02/17/3C8LdJ.png" alt="3C8LdJ.png" style="zoom:67%;" />
+
+### SpringBoot引入AOP
+
+**引入依赖**
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-aop</artifactId>
+</dependency>
+```
+
+**是否需要在程序主类中增加@EnableAspectJAutoProxy 注解**
+答案是否。只要引入了AOP依赖后，默认已经增加了@EnableAspectJAutoProxy。
+
+**实例**
+
+```java
+@Aspect
+@Component
+public class WebLogAspect {
+
+    private Logger logger = Logger.getLogger(getClass());
+     
+    @Pointcut("execution(public * com.didispace.web..*.*(..))")
+    public void webLog(){}
+     
+    @Before("webLog()")
+    public void doBefore(JoinPoint joinPoint) throws Throwable {
+        // 接收到请求，记录请求内容
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = attributes.getRequest();
+     
+        // 记录下请求内容
+        logger.info("URL : " + request.getRequestURL().toString());
+        logger.info("HTTP_METHOD : " + request.getMethod());
+        logger.info("IP : " + request.getRemoteAddr());
+        logger.info("CLASS_METHOD : " + joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName());
+        logger.info("ARGS : " + Arrays.toString(joinPoint.getArgs()));
+     
+    }
+     
+    @AfterReturning(returning = "ret", pointcut = "webLog()")
+    public void doAfterReturning(Object ret) throws Throwable {
+        // 处理完请求，返回内容
+        logger.info("RESPONSE : " + ret);
+    }
+
+}
+```
+
+注：doBefore也可以这样写，doBefore(ProceedingJoinPoint point)，ProceedingJoinPoint 是JoinPoint实现子类且他俩都是接口。ProceedingJoinPoint是在JoinPoint的基础上暴露出 proceed 这个方法。proceed很重要，这个是aop代理链执行的方法。暴露出这个方法，就能支持 aop:around 这种切面（而其他的几种切面只需要用到JoinPoint，这跟切面类型有关）， 能决定是否走代理链还是走自己拦截的其他逻辑。
+
+
+**防止二次代理**
+
+5 @Pointcut 组合使用，切入点之间可以通过 && || ! 逻辑表达式进入组合使用。 
+
+@Pointcut("execution(public * com.didispace.web..*.*(..))")
+    public void a1(){}
+ @Pointcut("execution(public * com.didispace.web..*.*(..))")
+    public void a2(){}
+ @Before("a1||a2")
+ public void doBefore(JoinPoint joinPoint) throws Throwable {。。。。。}
+拓展：
+
+指定类上包含注解的作为切点，然后可以在切入点开始处(如@Before @after)做具体的处理，如判断是否标记了@service注解
+
+@Pointcut("@annotation(com.aa.abc................)") 
+
+包含指定注解的作为切点：所有标记了@ResponseBody 注解的作为切点
+
+@Pointcut(value = "@annotation(org.springframework.web.bind.annotation.ResponseBody)")
+public void responseBodyPointcut() {}
+
+组合使用：指定类上，标注了指定注解的作为切点
+
+6 指定代理方式jdk/cglib 在yml文件配置
+
+spring:
+  aop:
+    proxy-target-class: false #jdk
+
+## 常见错误
+
+### 不可以创建Bean
+
+最常见的错误就是切面的执行表达式写错了，代理时不能解析。
+
+
+
+默认使用的是jdk代理，在SpringBoot中可以设置为使用cglib代理，在主Application中添加注解
+
+```java
+@EnableAspectJAutoProxy(proxyTargetClass = true)
+```
+

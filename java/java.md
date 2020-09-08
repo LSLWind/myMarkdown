@@ -260,7 +260,7 @@ public class TestDemo {
 ```
 
 结果为：
-我是自动创建的代理mapper.$Proxy0
+我是自动创建的代理mapper.Proxy0
 我是代理，我需要处理方法sayA
 I am A
 我是自动创建的代理mapper.$Proxy1
